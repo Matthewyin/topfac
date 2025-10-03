@@ -53,6 +53,27 @@ Hono.js 后端服务 (HTTP:30010)
 JSON 文件存储 (projects.json, project_versions.json, etc.)
 ```
 
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    阿里云ECS服务器                            │
+│                 Ubuntu 22.04.5 LTS                          │
+│                  IP: 公网IP。                                │
+└─────────────────────────────────────────────────────────────┘
+                            │
+        ┌───────────────────┼───────────────────┐
+        │                   │                   │
+        ▼                   ▼                   ▼
+┌──────────────┐   ┌──────────────┐   ┌──────────────┐
+│   Nginx      │   │  Node.js     │   │  Certbot     │
+│  (宿主机)     │   │  (宿主机)     │   │  (宿主机)     │
+│  端口: 80     │   │  端口: 30010  │   │  SSL证书     │
+│  端口: 443    │   │              │   │  自动续期     │
+└──────────────┘   └──────────────┘   └──────────────┘
+     systemd            systemd            systemd
+   nginx.service     topfac.service     certbot.timer
+
+
+
 ### 前端架构
 
 ```
@@ -413,9 +434,9 @@ sudo systemctl start topfac
 
 **示例：**
 ```
-【生产网】【亦庄数据中心】的【核心区】【核心路由器1】
-【生产网】【亦庄数据中心】的【接入区】【接入交换机1】
-【生产网】【亦庄数据中心】的【核心区】【核心路由器1】连接【生产网】【亦庄数据中心】的【接入区】【接入交换机1】
+【生产网】【数据中心】的【核心区】【核心路由器1】
+【生产网】【数据中心】的【接入区】【接入交换机1】
+【生产网】【数据中心】的【核心区】【核心路由器1】连接【生产网】【数据中心】的【接入区】【接入交换机1】
 ```
 
 #### 生成步骤
@@ -776,6 +797,238 @@ npm run clean:logs
 ```
 
 ---
+
+
+
+---
+
+## 📋 部署架构确认
+
+#### 1. **当前部署架构**
+
+**架构类型：传统的宿主机直接部署（Native Deployment）**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    阿里云ECS服务器                            │
+│                  Ubuntu 22.04.5 LTS                          │
+│                  IP: 8.216.32.61                             │
+└─────────────────────────────────────────────────────────────┘
+                            │
+        ┌───────────────────┼───────────────────┐
+        │                   │                   │
+        ▼                   ▼                   ▼
+┌──────────────┐   ┌──────────────┐   ┌──────────────┐
+│   Nginx      │   │  Node.js     │   │  Certbot     │
+│  (宿主机)     │   │  (宿主机)     │   │  (宿主机)     │
+│  端口: 80    │   │  端口: 30010  │   │  SSL证书     │
+│  端口: 443   │   │              │   │  自动续期     │
+└──────────────┘   └──────────────┘   └──────────────┘
+     systemd            systemd            systemd
+   nginx.service     topfac.service     certbot.timer
+```
+
+---
+
+#### 2. **各组件部署方式详细说明**
+
+##### **A. Nginx（反向代理 + SSL终止）**
+
+- **部署方式**：直接安装在宿主机上
+- **安装方式**：通过APT包管理器安装
+- **安装路径**：`/usr/sbin/nginx`
+- **配置文件**：`/etc/nginx/sites-available/topfac`
+- **服务管理**：systemd (`nginx.service`)
+- **运行用户**：
+  - Master进程：root (PID 14686)
+  - Worker进程：www-data (PID 23081, 23082)
+- **监听端口**：
+  - HTTP: 0.0.0.0:80
+  - HTTPS: 0.0.0.0:443
+- **功能**：
+  - SSL/TLS终止（Let's Encrypt证书）
+  - HTTP到HTTPS重定向
+  - 反向代理到Node.js后端（30010端口）
+  - 静态资源缓存
+  - 安全头设置（HSTS、X-Frame-Options等）
+
+**验证命令输出：**
+```bash
+root       14686  0.0  0.2  66584  2656 ?        Ss   01:06   0:00 nginx: master process
+www-data   23081  0.0  0.8  67728  8096 ?        S    11:33   0:00 nginx: worker process
+```
+
+---
+
+##### **B. Node.js后端服务（TopFac应用）**
+
+- **部署方式**：直接在宿主机上运行
+- **安装方式**：通过NodeSource仓库安装
+- **版本**：Node.js v20.19.5
+- **安装路径**：`/usr/bin/node`
+- **应用目录**：`/opt/topfac`
+- **启动命令**：`/usr/bin/node server/index.js`
+- **服务管理**：systemd (`topfac.service`)
+- **监听端口**：:::30010 (IPv6，同时支持IPv4)
+- **环境变量**：
+  - `NODE_ENV=production`
+  - `PORT=30010`
+  - `NODE_OPTIONS=--max-old-space-size=512`
+- **自动重启**：是（Restart=always, RestartSec=10）
+- **日志输出**：systemd journal
+
+**验证命令输出：**
+```bash
+root       24847  0.1  6.3 11514904 57864 ?      Ssl  11:57   0:00 /usr/bin/node server/index.js
+```
+
+**systemd服务配置：**
+```ini
+[Unit]
+Description=TopFac Local - 智能网络拓扑生成系统
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/topfac
+Environment=NODE_ENV=production
+Environment=PORT=30010
+Environment=NODE_OPTIONS=--max-old-space-size=512
+ExecStart=/usr/bin/node server/index.js
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-u
+```
+
+**运行中的相关服务：**
+```
+● docker.service    - Docker守护进程（已安装但未使用）
+● nginx.service     - Nginx Web服务器
+● topfac.service    - TopFac应用服务
+● certbot.timer     - SSL证书自动续期定时器
+```
+
+---
+
+### 📊 完整的请求流程
+
+```
+用户浏览器
+    │
+    │ HTTPS请求 (443端口)
+    ▼
+┌─────────────────────────────────────┐
+│  Nginx (宿主机 - systemd管理)        │
+│  - SSL终止 (Let's Encrypt证书)      │
+│  - 域名: topfac.netc2c.com          │
+│  - 域名: topfac.nssa.io             │
+└─────────────────────────────────────┘
+    │
+    │ HTTP反向代理
+    ▼
+┌─────────────────────────────────────┐
+│  Node.js (宿主机 - systemd管理)      │
+│  - Hono.js框架                      │
+│  - 端口: 30010                      │
+│  - 工作目录: /opt/topfac            │
+│  - 进程: /usr/bin/node server/index.js │
+└─────────────────────────────────────┘
+    │
+    │ 文件系统访问
+    ▼
+┌─────────────────────────────────────┐
+│  数据存储 (宿主机文件系统)            │
+│  - JSON文件: /opt/topfac/data/*.json│
+│  - 静态文件: /opt/topfac/dist/      │
+│  - 日志文件: /opt/topfac/logs/      │
+└─────────────────────────────────────┘
+```
+
+---
+
+### 🔍 部署目录结构
+
+```
+/opt/topfac/                          # 应用根目录
+├── server/                           # 后端代码
+│   ├── index.js                     # 应用入口（被systemd启动）
+│   ├── routes/                      # API路由
+│   ├── services/                    # 业务服务
+│   └── database/                    # 数据库层
+├── client/                           # 前端源码
+│   ├── pages/                       # Nuxt页面
+│   ├── components/                  # Vue组件
+│   └── nuxt.config.ts              # Nuxt配置
+├── dist/                            # 前端构建产物（Nginx提供静态文件）
+│   ├── index.html
+│   └── _nuxt/                      # 打包后的JS/CSS
+├── data/                            # JSON数据文件
+│   ├── projects.json
+│   └── project_versions.json
+├── logs/                            # 应用日志
+├── node_modules/                    # 依赖包
+├── package.json                     # 项目配置
+└── README.md                        # 项目文档
+```
+
+---
+
+### 🔐 SSL证书管理
+
+- **证书提供商**：Let's Encrypt
+- **管理工具**：Certbot
+- **证书路径**：`/etc/letsencrypt/live/topfac.netc2c.com/`
+- **自动续期**：是（通过systemd timer: `certbot.timer`）
+- **验证方式**：HTTP-01（通过80端口）
+- **包含域名**：
+  - topfac.netc2c.com
+  - topfac.nssa.io
+- **有效期**：90天（自动续期）
+
+---
+
+### 📦 软件版本信息
+
+| 组件     | 版本               | 安装方式           |
+| -------- | ------------------ | ------------------ |
+| 操作系统 | Ubuntu 22.04.5 LTS | -                  |
+| Nginx    | 1.18.0             | APT (系统包)       |
+| Node.js  | v20.19.5           | NodeSource仓库     |
+| Docker   | 28.4.0             | 官方仓库（未使用） |
+| Certbot  | -                  | APT (系统包)       |
+
+---
+
+### ✅ 总结
+
+**当前部署架构是：传统的宿主机直接部署（Native/Bare-metal Deployment）**
+
+**特点：**
+- ✅ 所有服务直接运行在宿主机上
+- ✅ 使用systemd统一管理所有服务
+- ✅ 没有使用任何容器化技术
+- ✅ 简单、直接、易于维护
+- ✅ 资源开销小（无容器层）
+
+**优点：**
+- 部署简单，无需学习容器技术
+- 性能开销小，无容器虚拟化层
+- 调试方便，直接查看进程和日志
+- 资源利用率高
+
+**缺点：**
+- 环境隔离性较差
+- 迁移和扩展相对复杂
+- 依赖系统级软件包管理
+
+这是一个**经典的LEMP/MEAN栈部署架构**（Linux + Nginx + Node.js），适合中小型应用的生产环境部署。
+
+
 
 ## 🤝 贡献
 
