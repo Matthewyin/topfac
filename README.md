@@ -222,30 +222,7 @@ TopFac使用环境变量管理敏感配置（如Google Analytics ID）。详见[
 
 ---
 
-## 🚀 代码更新与部署流程
-
-### 更新代码到GitHub
-
-当你在本地修改了代码后，按照以下步骤提交到GitHub：
-
-```bash
-# 1. 查看修改的文件
-git status
-
-# 2. 添加所有修改的文件到暂存区
-git add -A
-
-# 3. 提交修改（附带清晰的提交信息）
-git commit -m "描述你的修改内容"
-
-# 4. 推送到GitHub
-git push origin main
-
-# 5. 验证推送成功
-git log --oneline -5  # 查看最近5次提交
-```
-
-## 🔍 部署目录结构
+## 🔍 目录结构
 
 ```
 /opt/topfac/                          # 应用根目录
