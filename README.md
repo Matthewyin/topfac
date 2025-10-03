@@ -518,6 +518,265 @@ npm run test:api
 
 ---
 
+## 🚀 代码更新与部署流程
+
+### 更新代码到 GitHub
+
+当你在本地修改了代码后，按照以下步骤提交到 GitHub：
+
+```bash
+# 1. 查看修改的文件
+git status
+
+# 2. 添加所有修改的文件到暂存区
+git add -A
+
+# 3. 提交修改（附带清晰的提交信息）
+git commit -m "描述你的修改内容"
+
+# 示例：
+# git commit -m "feat: 添加新功能"
+# git commit -m "fix: 修复某个bug"
+# git commit -m "chore: 更新配置文件"
+
+# 4. 推送到 GitHub
+git push origin main
+
+# 5. 验证推送成功
+git log --oneline -5  # 查看最近5次提交
+```
+
+**提交信息规范：**
+- `feat:` 新功能
+- `fix:` 修复bug
+- `chore:` 配置、依赖更新等
+- `docs:` 文档更新
+- `style:` 代码格式调整
+- `refactor:` 代码重构
+
+### 更新代码到服务器
+
+服务器部署在 `/opt/topfac`，使用 systemd 管理服务。
+
+#### 方式一：手动更新单个文件（推荐用于小改动）
+
+```bash
+# 1. 备份当前版本
+ssh root@8.216.32.61 "cd /opt/topfac && cp -r server server.backup.$(date +%Y%m%d_%H%M%S)"
+
+# 2. 上传修改的文件
+# 示例：上传后端文件
+scp server/services/DrawIOService.js root@8.216.32.61:/opt/topfac/server/services/
+
+# 示例：上传前端配置文件
+scp client/nuxt.config.ts root@8.216.32.61:/opt/topfac/client/
+
+# 3. 如果修改了前端代码，需要重新构建
+ssh root@8.216.32.61 "cd /opt/topfac && npm run build"
+
+# 4. 重启服务
+ssh root@8.216.32.61 "systemctl restart topfac"
+
+# 5. 验证服务状态
+ssh root@8.216.32.61 "systemctl status topfac --no-pager"
+```
+
+#### 方式二：完整部署（推荐用于大改动）
+
+```bash
+# 1. SSH 登录服务器
+ssh root@8.216.32.61
+
+# 2. 进入项目目录
+cd /opt/topfac
+
+# 3. 备份当前版本
+cp -r server server.backup.$(date +%Y%m%d_%H%M%S)
+cp -r client client.backup.$(date +%Y%m%d_%H%M%S)
+
+# 4. 如果是 Git 仓库，拉取最新代码
+git pull origin main
+
+# 如果不是 Git 仓库，需要手动上传所有文件
+# 在本地执行：
+# scp -r server root@8.216.32.61:/opt/topfac/
+# scp -r client root@8.216.32.61:/opt/topfac/
+
+# 5. 安装/更新依赖
+npm install
+cd client && npm install && cd ..
+
+# 6. 重新构建前端
+npm run build
+
+# 7. 重启服务
+systemctl restart topfac
+
+# 8. 验证服务状态
+systemctl status topfac
+
+# 9. 查看服务日志
+journalctl -u topfac -n 50 --no-pager
+```
+
+#### 方式三：使用部署脚本（最便捷）
+
+创建本地部署脚本 `deploy-to-server.sh`：
+
+```bash
+#!/bin/bash
+# 部署脚本
+
+SERVER="root@8.216.32.61"
+DEPLOY_DIR="/opt/topfac"
+
+echo "=== 开始部署到服务器 ==="
+
+# 1. 备份
+echo "1. 备份当前版本..."
+ssh $SERVER "cd $DEPLOY_DIR && cp -r server server.backup.\$(date +%Y%m%d_%H%M%S)"
+
+# 2. 上传文件
+echo "2. 上传文件..."
+scp -r server $SERVER:$DEPLOY_DIR/
+scp -r client $SERVER:$DEPLOY_DIR/
+
+# 3. 构建
+echo "3. 重新构建..."
+ssh $SERVER "cd $DEPLOY_DIR && npm run build"
+
+# 4. 重启服务
+echo "4. 重启服务..."
+ssh $SERVER "systemctl restart topfac"
+
+# 5. 验证
+echo "5. 验证服务状态..."
+ssh $SERVER "systemctl status topfac --no-pager | head -20"
+
+echo "=== 部署完成 ==="
+```
+
+使用方法：
+
+```bash
+# 赋予执行权限
+chmod +x deploy-to-server.sh
+
+# 执行部署
+./deploy-to-server.sh
+```
+
+### 常见问题排查
+
+#### 1. 服务启动失败
+
+```bash
+# 查看详细日志
+journalctl -u topfac -n 100 --no-pager
+
+# 检查端口占用
+netstat -tlnp | grep 30010
+
+# 手动启动测试
+cd /opt/topfac
+node server/index.js
+```
+
+#### 2. 前端构建失败
+
+```bash
+# 清理并重新安装依赖
+cd /opt/topfac/client
+rm -rf node_modules package-lock.json
+npm install
+
+# 重新构建
+cd /opt/topfac
+npm run build
+```
+
+#### 3. Nginx 配置问题
+
+```bash
+# 测试 Nginx 配置
+nginx -t
+
+# 查看 Nginx 错误日志
+tail -f /var/log/nginx/error.log
+
+# 重新加载配置
+systemctl reload nginx
+```
+
+#### 4. SSL 证书问题
+
+```bash
+# 查看证书信息
+certbot certificates
+
+# 测试证书续期
+certbot renew --dry-run
+
+# 手动续期
+certbot renew
+```
+
+### 服务管理命令
+
+```bash
+# 启动服务
+systemctl start topfac
+
+# 停止服务
+systemctl stop topfac
+
+# 重启服务
+systemctl restart topfac
+
+# 查看服务状态
+systemctl status topfac
+
+# 查看服务日志
+journalctl -u topfac -f
+
+# 查看最近50条日志
+journalctl -u topfac -n 50 --no-pager
+
+# 启用开机自启
+systemctl enable topfac
+
+# 禁用开机自启
+systemctl disable topfac
+```
+
+### 监控与维护
+
+```bash
+# 查看服务运行状态
+systemctl status topfac
+
+# 查看端口监听
+netstat -tlnp | grep 30010
+
+# 查看进程信息
+ps aux | grep node
+
+# 查看磁盘使用
+df -h
+
+# 查看内存使用
+free -h
+
+# 查看数据文件大小
+du -sh /opt/topfac/data/*
+
+# 清理日志文件
+cd /opt/topfac
+npm run clean:logs
+```
+
+---
+
 ## 🤝 贡献
 
 欢迎提交 Issue 和 Pull Request！
