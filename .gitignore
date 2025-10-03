@@ -43,12 +43,14 @@ ENV/
 
 # Environment variables
 .env
-.env.*
-.env.example
 .env.local
+.env.development
 .env.development.local
+.env.test
 .env.test.local
-.env.production.local
+# 注意：.env.example 和 .env.production 需要提交到Git
+# .env.production 包含生产环境默认配置（不含敏感信息）
+# 敏感信息通过服务器环境变量覆盖
 
 # Editor directories and files
 .idea/

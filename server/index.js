@@ -105,14 +105,16 @@ logger.info(`访问地址: http://localhost:${port}`)
 logger.info(`健康检查: http://localhost:${port}/health`)
 logger.info(`API状态: http://localhost:${port}/api/status`)
 
-// 定期清理旧日志和备份
+// 启动日志清理任务（保留10天）
+logger.startCleanupSchedule()
+
+// 定期清理旧备份（保留7天）
 setInterval(async () => {
   try {
-    await logger.cleanupOldLogs(7)
     const { db } = await import('./database/index.js')
     await db.cleanupOldBackups(7)
   } catch (error) {
-    logger.error('清理任务失败', { error: error.message })
+    logger.error('清理备份任务失败', { error: error.message })
   }
 }, 24 * 60 * 60 * 1000) // 每24小时执行一次
 

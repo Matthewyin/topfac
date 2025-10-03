@@ -74,7 +74,11 @@ export default defineNuxtConfig({
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { name: 'description', content: 'TopFac 智能网络拓扑生成系统，支持自然语言转DrawIO格式' }
+        { name: 'description', content: 'TopFac 智能网络拓扑生成系统，支持自然语言转DrawIO格式' },
+        { name: 'keywords', content: '网络拓扑,DrawIO,AI转换,拓扑图生成' }
+      ],
+      link: [
+        { rel: 'canonical', href: 'https://topfac.nssa.io' }
       ]
     }
   },
@@ -87,6 +91,9 @@ export default defineNuxtConfig({
     },
     // 客户端配置
     public: {
+      // Google Analytics 4 衡量ID（从环境变量读取）
+      googleAnalyticsId: process.env.NUXT_PUBLIC_GOOGLE_ANALYTICS_ID || '',
+      // API基础URL
       topologyApiUrl: process.env.TOPOLOGY_API_URL || ''  // 使用相对路径，自动适配当前域名
     }
   },
@@ -110,6 +117,7 @@ export default defineNuxtConfig({
   // 插件配置
   plugins: [
     { src: '~/plugins/01.vuetify.client.ts', mode: 'client' },
-    { src: '~/plugins/topology-api.client.ts', mode: 'client' }
+    { src: '~/plugins/topology-api.client.ts', mode: 'client' },
+    { src: '~/plugins/google-analytics.client.ts', mode: 'client' }
   ]
 })

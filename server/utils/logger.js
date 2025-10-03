@@ -127,8 +127,9 @@ class Logger {
 
   /**
    * 清理旧日志文件
+   * 默认保留10天的日志
    */
-  async cleanupOldLogs(keepDays = 7) {
+  async cleanupOldLogs(keepDays = 10) {
     try {
       const files = await fs.readdir(LOG_DIR)
       const cutoffTime = Date.now() - (keepDays * 24 * 60 * 60 * 1000)
@@ -147,6 +148,22 @@ class Logger {
     } catch (error) {
       this.error('清理旧日志失败', { error: error.message })
     }
+  }
+
+  /**
+   * 启动定时清理任务
+   * 每天凌晨2点执行一次
+   */
+  startCleanupSchedule() {
+    // 立即执行一次清理
+    this.cleanupOldLogs()
+
+    // 每24小时执行一次
+    setInterval(() => {
+      this.cleanupOldLogs()
+    }, 24 * 60 * 60 * 1000)
+
+    this.info('日志清理任务已启动，保留期限：10天')
   }
 }
 

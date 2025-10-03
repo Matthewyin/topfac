@@ -236,13 +236,29 @@ cd topfac
 # 2. 安装依赖
 npm run install:all
 
-# 3. 启动开发服务器
+# 3. 配置环境变量（可选）
+cd client
+cp .env.example .env
+# 编辑.env文件，填入Google Analytics ID等配置
+nano .env
+
+# 4. 启动开发服务器
+cd ..
 npm run dev
 
-# 4. 访问应用
+# 5. 访问应用
 # 前端: http://localhost:3000
 # 后端: http://localhost:30010
 ```
+
+**环境变量配置（可选）：**
+
+TopFac使用环境变量管理敏感配置（如Google Analytics ID）。详见[环境变量配置指南](docs/ENVIRONMENT_VARIABLES.md)。
+
+主要环境变量：
+- `NUXT_PUBLIC_GOOGLE_ANALYTICS_ID` - Google Analytics 4 衡量ID
+- `TOPOLOGY_API_URL` - API基础URL（开发环境：`http://localhost:30010`）
+- `NODE_ENV` - 运行环境（`development` | `production`）
 
 ### 生产部署（完整流程）
 

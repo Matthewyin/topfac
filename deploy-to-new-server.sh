@@ -112,6 +112,8 @@ WorkingDirectory=$DEPLOY_DIR
 Environment=NODE_ENV=production
 Environment=PORT=30010
 Environment=NODE_OPTIONS=--max-old-space-size=512
+# Google Analytics 4 配置（从环境变量文件读取）
+EnvironmentFile=-$DEPLOY_DIR/client/.env.production
 ExecStart=/usr/bin/node server/index.js
 Restart=always
 RestartSec=10
@@ -124,8 +126,56 @@ EOF
 systemctl daemon-reload && systemctl enable topfac openresty && systemctl start topfac"
 echo -e "${GREEN}✓ systemd服务配置完成${NC}"
 
+# 步骤7.5: 配置环境变量
+echo -e "${YELLOW}[7.5/11] 配置环境变量...${NC}"
+ssh $SERVER "cd $DEPLOY_DIR/client && \
+    if [ ! -f .env.production ]; then \
+        echo '创建生产环境配置文件...'; \
+        cat > .env.production << 'ENVEOF'
+# TopFac 生产环境配置
+NUXT_PUBLIC_GOOGLE_ANALYTICS_ID=G-NV6BCFPN7W
+TOPOLOGY_API_URL=
+NODE_ENV=production
+ENVEOF
+    fi && \
+    echo '环境变量配置完成' && \
+    cat .env.production"
+echo -e "${GREEN}✓ 环境变量配置完成${NC}"
+
+# 步骤7.6: 配置日志系统
+echo -e "${YELLOW}[7.6/11] 配置日志系统...${NC}"
+ssh $SERVER "
+    # 配置OpenResty日志轮转（保留180天）
+    cat > /etc/logrotate.d/openresty << 'LOGEOF'
+/var/log/openresty/*.log {
+    daily
+    rotate 180
+    missingok
+    notifempty
+    compress
+    delaycompress
+    create 0640 www-data adm
+    sharedscripts
+    postrotate
+        if [ -f /var/run/openresty.pid ]; then
+            kill -USR1 \\\`cat /var/run/openresty.pid\\\`
+        fi
+    endscript
+    dateext
+    dateformat -%Y%m%d
+    maxsize 100M
+}
+LOGEOF
+    chmod 644 /etc/logrotate.d/openresty && \
+    echo 'OpenResty日志轮转配置完成' && \
+    # 创建日志目录
+    mkdir -p /var/log/openresty && \
+    mkdir -p $DEPLOY_DIR/logs && \
+    echo '日志目录创建完成'"
+echo -e "${GREEN}✓ 日志系统配置完成${NC}"
+
 # 步骤8: 配置OpenResty
-echo -e "${YELLOW}[8/10] 配置OpenResty...${NC}"
+echo -e "${YELLOW}[8/11] 配置OpenResty...${NC}"
 
 # 创建配置目录结构
 ssh $SERVER "mkdir -p /usr/local/openresty/nginx/conf/sites-available /usr/local/openresty/nginx/conf/sites-enabled /var/log/openresty /var/www/html"
@@ -214,7 +264,7 @@ ln -sf /usr/local/openresty/nginx/conf/sites-available/topfac /usr/local/openres
 echo -e "${GREEN}✓ OpenResty配置完成${NC}"
 
 # 步骤9: 创建临时SSL证书并启动OpenResty
-echo -e "${YELLOW}[9/10] 创建临时SSL证书...${NC}"
+echo -e "${YELLOW}[9/11] 创建临时SSL证书...${NC}"
 ssh $SERVER "mkdir -p /etc/ssl/topfac && \
     openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
     -keyout /etc/ssl/topfac/topfac.key \
@@ -225,6 +275,9 @@ ssh $SERVER "mkdir -p /etc/ssl/topfac && \
 echo -e "${GREEN}✓ 临时SSL证书已创建，OpenResty已启动${NC}"
 
 # 步骤10: 提示用户配置DNS和SSL证书
+echo ""
+echo -e "${YELLOW}=== 部署完成 ===${NC}"
+echo -e "${GREEN}✓ TopFac已成功部署到服务器${NC}"
 echo ""
 echo -e "${YELLOW}=== 重要提示 ===${NC}"
 echo -e "${RED}请先完成以下操作，然后运行SSL证书申请命令：${NC}"
