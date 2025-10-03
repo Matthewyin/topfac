@@ -54,7 +54,7 @@ TopFac 是一个智能网络拓扑生成系统，支持通过自然语言描述�
 **服务器信息：**
 - 云服务商：阿里云ECS
 - 操作系统：Ubuntu 22.04.5 LTS
-- 服务器IP：8.211.149.80
+- 服务器IP：服务器
 - 域名：topfac.netc2c.com, topfac.nssa.io
 
 **架构类型：** 传统宿主机直接部署（Native Deployment）
@@ -63,7 +63,7 @@ TopFac 是一个智能网络拓扑生成系统，支持通过自然语言描述�
 ┌─────────────────────────────────────────────────────────────┐
 │                    阿里云ECS服务器                            │
 │                 Ubuntu 22.04.5 LTS                          │
-│                  IP: 8.211.149.80                           │
+│                  IP: 服务器                           │
 └─────────────────────────────────────────────────────────────┘
                             │
         ┌───────────────────┼───────────────────┐
@@ -270,9 +270,6 @@ TopFac使用环境变量管理敏感配置（如Google Analytics ID）。详见[
 # 使用方法
 ./deploy-to-new-server.sh <服务器IP>
 
-# 示例
-./deploy-to-new-server.sh 8.211.149.80
-```
 
 脚本会自动完成：
 1. ✅ 安装OpenResty和Node.js
@@ -695,7 +692,7 @@ git log --oneline -5  # 查看最近5次提交
 
 ### 更新代码到服务器
 
-**当前生产服务器：** 8.211.149.80
+**当前生产服务器：** 服务器
 **部署目录：** `/opt/topfac`
 **Web服务器：** OpenResty 1.27.1.2
 **应用服务：** Node.js 20.19.5
@@ -704,30 +701,30 @@ git log --oneline -5  # 查看最近5次提交
 
 ```bash
 # 1. 备份当前版本
-ssh root@8.211.149.80 "cd /opt/topfac && cp -r server server.backup.$(date +%Y%m%d_%H%M%S)"
+ssh root@服务器 "cd /opt/topfac && cp -r server server.backup.$(date +%Y%m%d_%H%M%S)"
 
 # 2. 上传修改的文件
 # 示例：上传后端文件
-scp server/services/DrawIOService.js root@8.211.149.80:/opt/topfac/server/services/
+scp server/services/DrawIOService.js root@服务器:/opt/topfac/server/services/
 
 # 示例：上传前端配置文件
-scp client/nuxt.config.ts root@8.211.149.80:/opt/topfac/client/
+scp client/nuxt.config.ts root@服务器:/opt/topfac/client/
 
 # 3. 如果修改了前端代码，需要重新构建
-ssh root@8.211.149.80 "cd /opt/topfac && npm run build"
+ssh root@服务器 "cd /opt/topfac && npm run build"
 
 # 4. 重启应用服务
-ssh root@8.211.149.80 "systemctl restart topfac"
+ssh root@服务器 "systemctl restart topfac"
 
 # 5. 验证服务状态
-ssh root@8.211.149.80 "systemctl status topfac --no-pager"
+ssh root@服务器 "systemctl status topfac --no-pager"
 ```
 
 #### 方式二：完整部署（大改动）
 
 ```bash
 # 1. SSH登录服务器
-ssh root@8.211.149.80
+ssh root@服务器
 
 # 2. 进入项目目录
 cd /opt/topfac
@@ -740,7 +737,7 @@ cp -r client client.backup.$(date +%Y%m%d_%H%M%S)
 git pull origin main
 
 # 或手动上传所有文件（在本地执行）：
-# rsync -avz --exclude='node_modules' --exclude='dist' ./ root@8.211.149.80:/opt/topfac/
+# rsync -avz --exclude='node_modules' --exclude='dist' ./ root@服务器:/opt/topfac/
 
 # 5. 安装/更新依赖
 npm install

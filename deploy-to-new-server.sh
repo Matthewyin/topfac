@@ -32,7 +32,7 @@ echo "域名: $DOMAIN1, $DOMAIN2"
 echo ""
 
 # 步骤1: 检查SSH连接
-echo -e "${YELLOW}[1/10] 检查SSH连接...${NC}"
+echo -e "${YELLOW}[1/11] 检查SSH连接...${NC}"
 if ! ssh -o ConnectTimeout=5 $SERVER "echo 'SSH连接成功'" > /dev/null 2>&1; then
     echo -e "${RED}错误: 无法连接到服务器 $SERVER_IP${NC}"
     exit 1
@@ -40,7 +40,7 @@ fi
 echo -e "${GREEN}✓ SSH连接正常${NC}"
 
 # 步骤2: 安装OpenResty
-echo -e "${YELLOW}[2/10] 安装OpenResty...${NC}"
+echo -e "${YELLOW}[2/11] 安装OpenResty...${NC}"
 ssh $SERVER "apt update && apt install -y git curl wget gnupg ca-certificates lsb-release && \
     wget -O - https://openresty.org/package/pubkey.gpg | gpg --dearmor -o /usr/share/keyrings/openresty.gpg && \
     echo \"deb [arch=\$(dpkg --print-architecture) signed-by=/usr/share/keyrings/openresty.gpg] http://openresty.org/package/ubuntu \$(lsb_release -sc) main\" | tee /etc/apt/sources.list.d/openresty.list && \
@@ -49,18 +49,18 @@ OPENRESTY_VERSION=$(ssh $SERVER "/usr/local/openresty/nginx/sbin/nginx -v 2>&1 |
 echo -e "${GREEN}✓ OpenResty安装完成: $OPENRESTY_VERSION${NC}"
 
 # 步骤3: 安装Node.js
-echo -e "${YELLOW}[3/10] 安装Node.js 20.x...${NC}"
+echo -e "${YELLOW}[3/11] 安装Node.js 20.x...${NC}"
 ssh $SERVER "curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && apt install -y nodejs"
 NODE_VERSION=$(ssh $SERVER "node --version")
 echo -e "${GREEN}✓ Node.js安装完成: $NODE_VERSION${NC}"
 
 # 步骤4: 创建部署目录
-echo -e "${YELLOW}[4/10] 创建部署目录...${NC}"
+echo -e "${YELLOW}[4/11] 创建部署目录...${NC}"
 ssh $SERVER "mkdir -p $DEPLOY_DIR/data $DEPLOY_DIR/logs"
 echo -e "${GREEN}✓ 部署目录已创建${NC}"
 
 # 步骤5: 上传代码
-echo -e "${YELLOW}[5/10] 上传代码...${NC}"
+echo -e "${YELLOW}[5/11] 上传代码...${NC}"
 rsync -avz --exclude='node_modules' --exclude='client/node_modules' \
     --exclude='client/.nuxt' --exclude='client/.output' \
     --exclude='dist' --exclude='data' --exclude='logs' --exclude='.git' \
@@ -68,12 +68,12 @@ rsync -avz --exclude='node_modules' --exclude='client/node_modules' \
 echo -e "${GREEN}✓ 代码上传完成${NC}"
 
 # 步骤6: 安装依赖并构建
-echo -e "${YELLOW}[6/10] 安装依赖并构建...${NC}"
+echo -e "${YELLOW}[6/11] 安装依赖并构建...${NC}"
 ssh $SERVER "cd $DEPLOY_DIR && npm install && cd client && npm install && cd .. && npm run build"
 echo -e "${GREEN}✓ 依赖安装和构建完成${NC}"
 
 # 步骤7: 配置systemd服务
-echo -e "${YELLOW}[7/10] 配置systemd服务...${NC}"
+echo -e "${YELLOW}[7/11] 配置systemd服务...${NC}"
 
 # 配置OpenResty服务
 ssh $SERVER "cat > /etc/systemd/system/openresty.service << 'EOF'
@@ -276,10 +276,10 @@ echo -e "${GREEN}✓ 临时SSL证书已创建，OpenResty已启动${NC}"
 
 # 步骤10: 提示用户配置DNS和SSL证书
 echo ""
-echo -e "${YELLOW}=== 部署完成 ===${NC}"
+echo -e "${GREEN}=== 部署完成 ===${NC}"
 echo -e "${GREEN}✓ TopFac已成功部署到服务器${NC}"
 echo ""
-echo -e "${YELLOW}=== 重要提示 ===${NC}"
+echo -e "${YELLOW}=== 下一步操作 ===${NC}"
 echo -e "${RED}请先完成以下操作，然后运行SSL证书申请命令：${NC}"
 echo ""
 echo "1. 更新DNS记录："
@@ -334,6 +334,8 @@ echo "当前状态："
 echo "  ✓ OpenResty已安装并运行"
 echo "  ✓ TopFac应用已启动"
 echo "  ✓ 临时SSL证书已配置"
+echo "  ✓ 环境变量已配置（GA4 ID: G-NV6BCFPN7W）"
+echo "  ✓ 日志系统已配置（OpenResty: 180天, Node.js: 10天）"
 echo ""
 echo "访问地址："
 echo "  - http://$SERVER_IP (临时，使用自签名证书)"
@@ -343,4 +345,13 @@ echo ""
 echo "验证命令："
 echo "  ssh $SERVER 'systemctl status openresty topfac'"
 echo "  curl -k https://$SERVER_IP/health"
+echo ""
+echo "查看日志："
+echo "  ssh $SERVER 'tail -f /var/log/openresty/access.log'  # OpenResty访问日志"
+echo "  ssh $SERVER 'tail -f $DEPLOY_DIR/logs/\$(date +%Y-%m-%d).log'  # 应用日志"
+echo ""
+echo "环境变量配置："
+echo "  配置文件: $DEPLOY_DIR/client/.env.production"
+echo "  查看配置: ssh $SERVER 'cat $DEPLOY_DIR/client/.env.production'"
+echo "  详细文档: docs/ENVIRONMENT_VARIABLES.md"
 
