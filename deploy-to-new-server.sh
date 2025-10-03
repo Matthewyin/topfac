@@ -69,7 +69,9 @@ echo -e "${GREEN}✓ 代码上传完成${NC}"
 
 # 步骤6: 安装依赖并构建
 echo -e "${YELLOW}[6/11] 安装依赖并构建...${NC}"
-ssh $SERVER "cd $DEPLOY_DIR && npm install && cd client && npm install && cd .. && npm run build"
+ssh $SERVER "cd $DEPLOY_DIR && npm install && cd client && npm install && cd .. && \
+    echo '使用环境变量构建前端...' && \
+    cd client && NUXT_PUBLIC_GOOGLE_ANALYTICS_ID=G-NV6BCFPN7W npm run build && cd .."
 echo -e "${GREEN}✓ 依赖安装和构建完成${NC}"
 
 # 步骤7: 配置systemd服务
@@ -129,15 +131,22 @@ echo -e "${GREEN}✓ systemd服务配置完成${NC}"
 # 步骤7.5: 配置环境变量
 echo -e "${YELLOW}[7.5/11] 配置环境变量...${NC}"
 ssh $SERVER "cd $DEPLOY_DIR/client && \
-    if [ ! -f .env.production ]; then \
-        echo '创建生产环境配置文件...'; \
-        cat > .env.production << 'ENVEOF'
+    echo '配置生产环境变量文件...' && \
+    cat > .env.production << 'ENVEOF'
 # TopFac 生产环境配置
+# 此文件包含生产环境的默认配置
+# 敏感信息应通过服务器环境变量覆盖
+
+# Google Analytics 4 衡量ID
+# 生产环境应在服务器上设置环境变量覆盖此值
 NUXT_PUBLIC_GOOGLE_ANALYTICS_ID=G-NV6BCFPN7W
+
+# API基础URL（生产环境使用相对路径）
 TOPOLOGY_API_URL=
+
+# Node环境
 NODE_ENV=production
 ENVEOF
-    fi && \
     echo '环境变量配置完成' && \
     cat .env.production"
 echo -e "${GREEN}✓ 环境变量配置完成${NC}"
@@ -354,4 +363,30 @@ echo "环境变量配置："
 echo "  配置文件: $DEPLOY_DIR/client/.env.production"
 echo "  查看配置: ssh $SERVER 'cat $DEPLOY_DIR/client/.env.production'"
 echo "  详细文档: docs/ENVIRONMENT_VARIABLES.md"
+echo ""
+echo -e "${YELLOW}=== Google Analytics 4 验证 ===${NC}"
+echo "部署完成后，请在浏览器中验证GA4是否正常工作："
+echo ""
+echo "1. 访问网站（DNS生效后）："
+echo "   https://$DOMAIN1 或 https://$DOMAIN2"
+echo ""
+echo "2. 打开浏览器开发者工具（F12）"
+echo ""
+echo "3. 检查控制台："
+echo "   应该看到：[GA4] Initialized with ID: G-NV6BCFPN7W"
+echo ""
+echo "4. 检查网络请求："
+echo "   - 切换到【网络】标签"
+echo "   - 刷新页面（F5）"
+echo "   - 搜索：gtag"
+echo "   - 应该看到：gtag/js?id=G-NV6BCFPN7W"
+echo "   - 应该看到：g/collect（GA4数据收集请求）"
+echo ""
+echo "5. 查看GA4实时报告："
+echo "   - 访问：https://analytics.google.com"
+echo "   - 选择媒体资源：TopFac Production"
+echo "   - 左侧菜单：报告 > 实时"
+echo "   - 应该能看到访问记录"
+echo ""
+echo -e "${GREEN}部署脚本执行完成！${NC}"
 
