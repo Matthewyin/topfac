@@ -1,0 +1,54 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 前端构建缓存
+client/node_modules/
+client/.nuxt/
+client/.output/
+client/dist/
+
+# 开发文件
+.env.local
+.env.development
+*.log
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 操作系统
+.DS_Store
+Thumbs.db
+
+# 临时文件
+*.tmp
+*.temp
+
+# 测试覆盖率
+coverage/
+
+# 文档
+README.md
+docs/
+
+# 部署脚本
+scripts/deploy.sh
+scripts/backup.sh
+
+# 数据文件（运行时挂载）
+data/*.json
+logs/*.log
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml

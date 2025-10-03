@@ -1,0 +1,69 @@
+{
+  "name": "topfac-local",
+  "version": "1.0.0",
+  "description": "智能网络拓扑生成系统 - 本地单机版",
+  "type": "module",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "./scripts/dev.sh",
+    "dev:server": "nodemon server/index.js",
+    "dev:client": "cd client && npm run dev",
+    "build": "npm run build:client && npm run copy:dist",
+    "build:client": "cd client && npm run build",
+    "copy:dist": "rm -rf dist && cp -r client/.output/public dist",
+    "start": "node server/index.js",
+    "start:prod": "./scripts/start-prod.sh",
+    "install:all": "npm install && cd client && npm install",
+    "clean": "rm -rf node_modules client/node_modules dist data/*.json logs/*.log",
+    "clean:data": "rm -rf data/*.json",
+    "clean:logs": "rm -rf logs/*.log",
+    "backup": "node scripts/backup.js",
+    "restore": "node scripts/restore.js",
+    "test:api": "node scripts/test-api.js",
+    "docker:build": "docker build -t topfac-local .",
+    "docker:run": "docker run -d --name topfac-app -p 30010:3000 -v $(pwd)/data:/app/data topfac-local",
+    "docker:stop": "docker stop topfac-app && docker rm topfac-app",
+    "deploy": "./scripts/deploy.sh",
+    "lint": "cd client && npm run lint",
+    "lint:fix": "cd client && npm run lint:fix",
+    "test": "npm run test:api"
+  },
+  "keywords": [
+    "topology",
+    "network",
+    "ai",
+    "hono",
+    "nuxt",
+    "local",
+    "json-database"
+  ],
+  "author": "topfac",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "dependencies": {
+    "hono": "^4.6.3",
+    "@hono/node-server": "^1.12.0",
+    "dotenv": "^16.4.5",
+    "fs-extra": "^11.2.0",
+    "lodash": "^4.17.21",
+    "proper-lockfile": "^4.1.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4",
+    "concurrently": "^8.2.2",
+    "@types/node": "^20.14.10",
+    "@types/fs-extra": "^11.0.4",
+    "@types/lodash": "^4.17.7"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Matthewyin/topfac.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Matthewyin/topfac/issues"
+  },
+  "homepage": "https://github.com/Matthewyin/topfac#readme"
+}

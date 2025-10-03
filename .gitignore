@@ -9,15 +9,10 @@ pnpm-debug.log*
 
 # Dependency directories
 node_modules/
-frontpage/node_modules/
-frontpage/nuxt-app/node_modules/
+client/node_modules/
 package-lock.json
-*/package-lock.json
-backends/target/
-domain-service/target/
-line-service/target/
-ai-service/target/
-deploy/
+client/package-lock.json
+
 
 # Python
 __pycache__/
@@ -83,12 +78,10 @@ Thumbs.db
 .roomodes
 
 # Build outputs
-backends/target/
-domain-service/target/
-line-service/target/
-frontpage/nuxt-app/.nuxt/
-frontpage/nuxt-app/dist/
-frontpage/nuxt-app/.output/
+dist/
+client/.nuxt/
+client/dist/
+client/.output/
 *.jar
 *.war
 *.ear
@@ -96,17 +89,7 @@ frontpage/nuxt-app/.output/
 *.tar.gz
 *.rar
 
-# Maven
-.mvn/wrapper/maven-wrapper.jar
-.mvn/wrapper/maven-wrapper.properties
 
-# User uploads and outputs
-network-scheme-service/uploads/
-network-scheme-service/output/
-*/uploads/
-*/output/
-uploads/
-output/
 
 # Temporary files
 *.tmp
@@ -177,10 +160,16 @@ jspm_packages/
 # DynamoDB Local files
 .dynamodb/
 
-# Cloudflare Workers
-cloudflare-workers/.wrangler/
-cloudflare-workers/dist/
-cloudflare-workers/.dev.vars
-cloudflare-workers/wrangler.toml.backup
+# Local data files (keep structure but ignore content)
+data/*.json
+!data/.gitkeep
+
+# Backup files
+data/backups/*
+!data/backups/.gitkeep
+
+# Log files
+logs/*
+!logs/.gitkeep
 
 .augment/

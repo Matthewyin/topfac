@@ -1,0 +1,13 @@
+# 数据存储目录
+# 此目录用于存储 JSON 数据文件和备份
+
+# 目录结构:
+# data/
+# ├── projects.json              # 项目基础信息
+# ├── project_versions.json      # 项目版本信息
+# ├── parsed_data.json           # 解析后的结构化数据
+# ├── ai_configs.json            # AI服务配置
+# ├── component_templates.json   # 组件模板库
+# └── backups/                   # 自动备份目录
+#     ├── 2024-01-01/
+#     └── 2024-01-02/
