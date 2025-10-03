@@ -226,7 +226,7 @@ export class DrawIOService {
   }
 
   /**
-   * 计算布局位置
+   * 计算布局位置（使用相对坐标实现正确的层级嵌套）
    */
   calculateLayout(components, connections, environments) {
     const layout = {
@@ -236,70 +236,146 @@ export class DrawIOService {
       components: {}
     };
 
-    let envX = 50;
-    const envSpacing = 900;  // 增加环境间距
-    const envWidth = 800;    // 增加环境宽度
-    const envHeight = 600;   // 增加环境高度
+    // 环境容器配置
+    let envX = 50;  // 环境的绝对X坐标
+    const envY = 50;  // 环境的绝对Y坐标
+    const envSpacing = 50;  // 环境之间的间距
+    const envPadding = 20;  // 环境内边距
+
+    // 数据中心容器配置
+    const dcPadding = 20;  // 数据中心内边距
+    const dcSpacing = 30;  // 数据中心之间的间距
+
+    // 区域容器配置
+    const areaPadding = 20;  // 区域内边距
+    const areaSpacing = 30;  // 区域之间的间距
+    const areaWidth = 220;  // 区域宽度
+
+    // 组件配置
+    const compPadding = 40;  // 组件距离区域边缘的距离
+    const compSpacing = 50;  // 组件之间的间距
+    const compWidth = 140;  // 组件宽度
+    const compHeight = 40;  // 组件高度
 
     for (const env of environments) {
+      // 计算环境容器的尺寸
+      let maxDcHeight = 0;
+      let totalDcHeight = 0;
+
+      // 先计算所有数据中心的高度，以确定环境容器的高度
+      for (let dcIndex = 0; dcIndex < env.datacenters.length; dcIndex++) {
+        const dc = env.datacenters[dcIndex];
+
+        // 计算数据中心的高度
+        let maxAreaHeight = 0;
+
+        for (const area of dc.areas) {
+          // 计算区域高度：标题栏 + 内边距 + 组件数量 * (组件高度 + 间距)
+          const areaHeight = 40 + areaPadding * 2 +
+            Math.max(1, area.components.length) * compHeight +
+            Math.max(0, area.components.length - 1) * compSpacing;
+
+          maxAreaHeight = Math.max(maxAreaHeight, areaHeight);
+        }
+
+        // 数据中心高度 = 标题栏 + 内边距 + 区域高度
+        const dcHeight = 40 + dcPadding * 2 + maxAreaHeight;
+        maxDcHeight = Math.max(maxDcHeight, dcHeight);
+        totalDcHeight += dcHeight;
+      }
+
+      // 环境高度 = 标题栏 + 内边距 + 所有数据中心高度 + 数据中心间距
+      const envHeight = 40 + envPadding * 2 + totalDcHeight +
+        Math.max(0, env.datacenters.length - 1) * dcSpacing;
+
+      // 计算环境宽度：需要容纳所有区域横向排列
+      let maxAreasCount = 0;
+      for (const dc of env.datacenters) {
+        maxAreasCount = Math.max(maxAreasCount, dc.areas.length);
+      }
+      const envWidth = envPadding * 2 + dcPadding * 2 +
+        maxAreasCount * areaWidth +
+        Math.max(0, maxAreasCount - 1) * areaSpacing;
+
+      // 环境容器使用绝对坐标
       layout.environments[env.name] = {
         x: envX,
-        y: 50,
+        y: envY,
         width: envWidth,
         height: envHeight
       };
 
-      let dcY = 80;
-      const dcSpacing = 350;  // 增加数据中心间距
-      const dcWidth = envWidth - 40;
-      const dcHeight = 300;   // 增加数据中心高度
+      // 数据中心的Y坐标（相对于环境容器）
+      let dcY = envPadding;
 
-      for (const dc of env.datacenters) {
+      for (let dcIndex = 0; dcIndex < env.datacenters.length; dcIndex++) {
+        const dc = env.datacenters[dcIndex];
         const dcKey = `${env.name}-${dc.name}`;
+
+        // 计算数据中心的高度
+        let maxAreaHeight = 0;
+        for (const area of dc.areas) {
+          const areaHeight = 40 + areaPadding * 2 +
+            Math.max(1, area.components.length) * compHeight +
+            Math.max(0, area.components.length - 1) * compSpacing;
+          maxAreaHeight = Math.max(maxAreaHeight, areaHeight);
+        }
+
+        const dcHeight = 40 + dcPadding * 2 + maxAreaHeight;
+        const dcWidth = envWidth - envPadding * 2;
+
+        // 数据中心使用相对于环境的坐标
         layout.datacenters[dcKey] = {
-          x: envX + 20,
-          y: dcY,
+          x: envPadding,  // 相对于环境容器
+          y: dcY,  // 相对于环境容器
           width: dcWidth,
           height: dcHeight
         };
 
-        let areaX = envX + 40;
-        const areaSpacing = 250;  // 增加区域间距
-        const areaWidth = 200;    // 增加区域宽度
-        const areaHeight = 250;   // 增加区域高度
+        // 区域的X坐标（相对于数据中心容器）
+        let areaX = dcPadding;
 
-        for (const area of dc.areas) {
+        for (let areaIndex = 0; areaIndex < dc.areas.length; areaIndex++) {
+          const area = dc.areas[areaIndex];
           const areaKey = `${env.name}-${dc.name}-${area.name}`;
+
+          // 计算区域高度
+          const areaHeight = 40 + areaPadding * 2 +
+            Math.max(1, area.components.length) * compHeight +
+            Math.max(0, area.components.length - 1) * compSpacing;
+
+          // 区域使用相对于数据中心的坐标
           layout.areas[areaKey] = {
-            x: areaX,
-            y: dcY + 30,
+            x: areaX,  // 相对于数据中心容器
+            y: dcPadding,  // 相对于数据中心容器
             width: areaWidth,
             height: areaHeight
           };
 
-          // 在区域内布局组件
-          let compY = dcY + 60;
-          const compSpacing = 40;  // 增加组件间距
-          const compWidth = 120;   // 增加组件宽度
-          const compHeight = 30;   // 增加组件高度
+          // 组件的Y坐标（相对于区域容器）
+          let compY = areaPadding;
 
           for (let i = 0; i < area.components.length; i++) {
             const component = area.components[i];
+
+            // 组件使用相对于区域的坐标
             layout.components[component.id] = {
-              x: areaX + 40,
-              y: compY + (i * compSpacing),
+              x: areaPadding,  // 相对于区域容器
+              y: compY,  // 相对于区域容器
               width: compWidth,
               height: compHeight
             };
+
+            compY += compHeight + compSpacing;
           }
 
-          areaX += areaSpacing;
+          areaX += areaWidth + areaSpacing;
         }
 
-        dcY += dcSpacing;
+        dcY += dcHeight + dcSpacing;
       }
 
-      envX += envSpacing;
+      envX += envWidth + envSpacing;
     }
 
     return layout;
