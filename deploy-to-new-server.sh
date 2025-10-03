@@ -39,10 +39,14 @@ if ! ssh -o ConnectTimeout=5 $SERVER "echo 'SSH连接成功'" > /dev/null 2>&1; 
 fi
 echo -e "${GREEN}✓ SSH连接正常${NC}"
 
-# 步骤2: 安装必要软件
-echo -e "${YELLOW}[2/10] 安装必要软件...${NC}"
-ssh $SERVER "apt update && apt install -y nginx git curl"
-echo -e "${GREEN}✓ Nginx和Git安装完成${NC}"
+# 步骤2: 安装OpenResty
+echo -e "${YELLOW}[2/10] 安装OpenResty...${NC}"
+ssh $SERVER "apt update && apt install -y git curl wget gnupg ca-certificates lsb-release && \
+    wget -O - https://openresty.org/package/pubkey.gpg | gpg --dearmor -o /usr/share/keyrings/openresty.gpg && \
+    echo \"deb [arch=\$(dpkg --print-architecture) signed-by=/usr/share/keyrings/openresty.gpg] http://openresty.org/package/ubuntu \$(lsb_release -sc) main\" | tee /etc/apt/sources.list.d/openresty.list && \
+    apt update && apt install -y openresty openresty-opm openresty-resty"
+OPENRESTY_VERSION=$(ssh $SERVER "/usr/local/openresty/nginx/sbin/nginx -v 2>&1 | grep -oP 'openresty/\K[0-9.]+'" || echo "已安装")
+echo -e "${GREEN}✓ OpenResty安装完成: $OPENRESTY_VERSION${NC}"
 
 # 步骤3: 安装Node.js
 echo -e "${YELLOW}[3/10] 安装Node.js 20.x...${NC}"
@@ -70,6 +74,32 @@ echo -e "${GREEN}✓ 依赖安装和构建完成${NC}"
 
 # 步骤7: 配置systemd服务
 echo -e "${YELLOW}[7/10] 配置systemd服务...${NC}"
+
+# 配置OpenResty服务
+ssh $SERVER "cat > /etc/systemd/system/openresty.service << 'EOF'
+[Unit]
+Description=OpenResty - High Performance Web Server
+Documentation=https://openresty.org/
+After=network.target remote-fs.target nss-lookup.target
+
+[Service]
+Type=forking
+PIDFile=/var/run/openresty.pid
+ExecStartPre=/usr/local/openresty/nginx/sbin/nginx -t -c /usr/local/openresty/nginx/conf/nginx.conf
+ExecStart=/usr/local/openresty/nginx/sbin/nginx -c /usr/local/openresty/nginx/conf/nginx.conf
+ExecReload=/bin/kill -s HUP \\\$MAINPID
+ExecStop=/bin/kill -s QUIT \\\$MAINPID
+PrivateTmp=true
+Restart=on-failure
+RestartSec=5s
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target
+EOF
+"
+
+# 配置TopFac服务
 ssh $SERVER "cat > /etc/systemd/system/topfac.service << 'EOF'
 [Unit]
 Description=TopFac - 智能网络拓扑生成系统
@@ -91,37 +121,58 @@ StandardError=journal
 [Install]
 WantedBy=multi-user.target
 EOF
-systemctl daemon-reload && systemctl enable topfac && systemctl start topfac"
+systemctl daemon-reload && systemctl enable topfac openresty && systemctl start topfac"
 echo -e "${GREEN}✓ systemd服务配置完成${NC}"
 
-# 步骤8: 配置Nginx
-echo -e "${YELLOW}[8/10] 配置Nginx...${NC}"
-ssh $SERVER "cat > /etc/nginx/sites-available/topfac << 'EOFNGINX'
+# 步骤8: 配置OpenResty
+echo -e "${YELLOW}[8/10] 配置OpenResty...${NC}"
+
+# 创建配置目录结构
+ssh $SERVER "mkdir -p /usr/local/openresty/nginx/conf/sites-available /usr/local/openresty/nginx/conf/sites-enabled /var/log/openresty /var/www/html"
+
+# 更新主配置文件以包含sites-enabled
+ssh $SERVER "grep -q 'sites-enabled' /usr/local/openresty/nginx/conf/nginx.conf || \
+    sed -i '/http {/a\    include /usr/local/openresty/nginx/conf/sites-enabled/*;' /usr/local/openresty/nginx/conf/nginx.conf"
+
+# 创建站点配置文件
+ssh $SERVER "cat > /usr/local/openresty/nginx/conf/sites-available/topfac << 'EOFNGINX'
+# HTTP配置
 server {
     listen 80;
     server_name $DOMAIN1 $DOMAIN2;
-    
-    location /.well-known/acme-challenge/ {
+
+    # Let's Encrypt验证路径（优先级最高）
+    location ^~ /.well-known/acme-challenge/ {
         root /var/www/html;
+        allow all;
     }
-    
+
+    # 其他请求重定向到HTTPS
     location / {
         return 301 https://\\\$server_name\\\$request_uri;
     }
 }
 
+# HTTPS配置
 server {
-    listen 443 ssl http2;
+    listen 443 ssl;
+    http2 on;
     server_name $DOMAIN1 $DOMAIN2;
-    
+
+    # SSL安全配置
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers HIGH:!aNULL:!MD5;
     ssl_prefer_server_ciphers on;
-    
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 10m;
+
+    # 安全头
     add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains\" always;
     add_header X-Frame-Options DENY always;
     add_header X-Content-Type-Options nosniff always;
-    
+    add_header X-XSS-Protection \"1; mode=block\" always;
+
+    # API代理
     location /api/ {
         proxy_pass http://127.0.0.1:30010;
         proxy_set_header Host \\\$host;
@@ -132,18 +183,21 @@ server {
         proxy_send_timeout 600s;
         proxy_read_timeout 600s;
     }
-    
+
+    # 健康检查
     location /health {
         proxy_pass http://127.0.0.1:30010;
         access_log off;
     }
-    
+
+    # 静态资源缓存
     location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)\\\$ {
         proxy_pass http://127.0.0.1:30010;
         expires 1y;
         add_header Cache-Control \"public, immutable\";
     }
-    
+
+    # SPA路由支持
     location / {
         proxy_pass http://127.0.0.1:30010;
         proxy_set_header Host \\\$host;
@@ -156,23 +210,21 @@ server {
     }
 }
 EOFNGINX
-ln -sf /etc/nginx/sites-available/topfac /etc/nginx/sites-enabled/
-rm -f /etc/nginx/sites-enabled/default"
-echo -e "${GREEN}✓ Nginx配置完成${NC}"
+ln -sf /usr/local/openresty/nginx/conf/sites-available/topfac /usr/local/openresty/nginx/conf/sites-enabled/"
+echo -e "${GREEN}✓ OpenResty配置完成${NC}"
 
-# 步骤9: 创建临时SSL证书并启动Nginx
+# 步骤9: 创建临时SSL证书并启动OpenResty
 echo -e "${YELLOW}[9/10] 创建临时SSL证书...${NC}"
-ssh $SERVER "mkdir -p /etc/nginx/ssl && \
+ssh $SERVER "mkdir -p /etc/ssl/topfac && \
     openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-    -keyout /etc/nginx/ssl/topfac.key \
-    -out /etc/nginx/ssl/topfac.crt \
+    -keyout /etc/ssl/topfac/topfac.key \
+    -out /etc/ssl/topfac/topfac.crt \
     -subj '/CN=$DOMAIN1' && \
-    sed -i '23i\    ssl_certificate /etc/nginx/ssl/topfac.crt;' /etc/nginx/sites-available/topfac && \
-    sed -i '24i\    ssl_certificate_key /etc/nginx/ssl/topfac.key;' /etc/nginx/sites-available/topfac && \
-    nginx -t && systemctl reload nginx"
-echo -e "${GREEN}✓ 临时SSL证书已创建，Nginx已启动${NC}"
+    sed -i '/server_name $DOMAIN1 $DOMAIN2;/a\    ssl_certificate /etc/ssl/topfac/topfac.crt;\n    ssl_certificate_key /etc/ssl/topfac/topfac.key;' /usr/local/openresty/nginx/conf/sites-available/topfac && \
+    /usr/local/openresty/nginx/sbin/nginx -t && systemctl start openresty"
+echo -e "${GREEN}✓ 临时SSL证书已创建，OpenResty已启动${NC}"
 
-# 步骤10: 提示用户配置DNS
+# 步骤10: 提示用户配置DNS和SSL证书
 echo ""
 echo -e "${YELLOW}=== 重要提示 ===${NC}"
 echo -e "${RED}请先完成以下操作，然后运行SSL证书申请命令：${NC}"
@@ -189,12 +241,53 @@ echo "3. 等待DNS生效（1-5分钟），验证："
 echo "   nslookup $DOMAIN1 8.8.8.8"
 echo "   nslookup $DOMAIN2 8.8.8.8"
 echo ""
-echo "4. DNS生效后，运行以下命令申请SSL证书："
-echo -e "${GREEN}   ssh $SERVER \"apt install -y certbot python3-certbot-nginx && certbot --nginx -d $DOMAIN1 -d $DOMAIN2 --non-interactive --agree-tos --email $EMAIL --redirect\"${NC}"
+echo "4. DNS生效后，运行以下命令申请Let's Encrypt SSL证书："
+echo ""
+echo -e "${GREEN}ssh $SERVER << 'EOFSSL'
+# 安装Certbot
+apt install -y certbot
+
+# 申请SSL证书（使用webroot模式）
+certbot certonly --webroot -w /var/www/html \\
+  -d $DOMAIN1 -d $DOMAIN2 \\
+  --non-interactive --agree-tos --email $EMAIL
+
+# 更新OpenResty配置使用正式证书
+sed -i 's|/etc/ssl/topfac/topfac.crt|/etc/letsencrypt/live/$DOMAIN1/fullchain.pem|g' /usr/local/openresty/nginx/conf/sites-available/topfac
+sed -i 's|/etc/ssl/topfac/topfac.key|/etc/letsencrypt/live/$DOMAIN1/privkey.pem|g' /usr/local/openresty/nginx/conf/sites-available/topfac
+
+# 创建续期钩子
+mkdir -p /etc/letsencrypt/renewal-hooks/deploy
+cat > /etc/letsencrypt/renewal-hooks/deploy/reload-openresty.sh << 'EOFHOOK'
+#!/bin/bash
+systemctl reload openresty
+logger \"Certbot renewed certificate, OpenResty reloaded\"
+EOFHOOK
+chmod +x /etc/letsencrypt/renewal-hooks/deploy/reload-openresty.sh
+
+# 测试配置并重载OpenResty
+/usr/local/openresty/nginx/sbin/nginx -t && systemctl reload openresty
+
+# 测试自动续期
+certbot renew --dry-run
+
+echo \"SSL证书申请成功！\"
+EOFSSL
+${NC}"
 echo ""
 echo -e "${GREEN}=== 部署完成 ===${NC}"
+echo ""
+echo "当前状态："
+echo "  ✓ OpenResty已安装并运行"
+echo "  ✓ TopFac应用已启动"
+echo "  ✓ 临时SSL证书已配置"
+echo ""
 echo "访问地址："
 echo "  - http://$SERVER_IP (临时，使用自签名证书)"
 echo "  - https://$DOMAIN1 (DNS生效并申请SSL证书后)"
 echo "  - https://$DOMAIN2 (DNS生效并申请SSL证书后)"
+echo ""
+echo "验证命令："
+echo "  ssh $SERVER 'systemctl status openresty topfac'"
+echo "  curl -k https://$SERVER_IP/health"
 
