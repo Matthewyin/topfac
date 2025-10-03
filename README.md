@@ -154,9 +154,8 @@ TopFac使用环境变量管理敏感配置（如Google Analytics ID）。详见[
 
 #### 使用自动化部署脚本
 
-项目提供了自动化部署脚本 `deploy-to-new-server.sh`，可一键部署到新服务器：
+项目提供了自动化部署脚本 `deploy-to-new-server.sh`，可一键部署到新服务器
 
-```bash
 # 使用方法
 ./deploy-to-new-server.sh <服务器IP>
 
@@ -171,7 +170,6 @@ TopFac使用环境变量管理敏感配置（如Google Analytics ID）。详见[
 **部署后需要手动操作：**
 1. 更新DNS记录指向新服务器IP
 2. 申请Let's Encrypt正式证书
----
 
 ## 📚 使用说明
 
@@ -195,21 +193,18 @@ TopFac使用环境变量管理敏感配置（如Google Analytics ID）。详见[
 #### 文本格式规范
 
 **设备定义：**
-```
+
 【环境名】【数据中心名】的【区域名】【设备名】
-```
 
 **连接定义：**
-```
+
 【环境名】【数据中心名】的【区域名】【设备A】连接【环境名】【数据中心名】的【区域名】【设备B】
-```
 
 **示例：**
-```
+
 【生产网】【数据中心】的【核心区】【核心路由器1】
 【生产网】【数据中心】的【接入区】【接入交换机1】
 【生产网】【数据中心】的【核心区】【核心路由器1】连接【生产网】【数据中心】的【接入区】【接入交换机1】
-```
 
 #### 生成步骤
 
@@ -249,78 +244,6 @@ git push origin main
 # 5. 验证推送成功
 git log --oneline -5  # 查看最近5次提交
 ```
-
-
-### 更新代码到服务器
-
-**当前生产服务器：** 服务器
-**部署目录：** `/opt/topfac`
-**Web服务器：** OpenResty 1.27.1.2
-**应用服务：** Node.js 20.19.5
-
-#### 方式一：快速更新单个文件（小改动）
-
-```bash
-# 1. 备份当前版本
-ssh root@服务器 "cd /opt/topfac && cp -r server server.backup.$(date +%Y%m%d_%H%M%S)"
-
-# 2. 上传修改的文件
-# 示例：上传后端文件
-scp server/services/DrawIOService.js root@服务器:/opt/topfac/server/services/
-
-# 示例：上传前端配置文件
-scp client/nuxt.config.ts root@服务器:/opt/topfac/client/
-
-# 3. 如果修改了前端代码，需要重新构建
-ssh root@服务器 "cd /opt/topfac && npm run build"
-
-# 4. 重启应用服务
-ssh root@服务器 "systemctl restart topfac"
-
-# 5. 验证服务状态
-ssh root@服务器 "systemctl status topfac --no-pager"
-```
-
-#### 方式二：完整部署（大改动）
-
-```bash
-# 1. SSH登录服务器
-ssh root@服务器
-
-# 2. 进入项目目录
-cd /opt/topfac
-
-# 3. 备份当前版本
-cp -r server server.backup.$(date +%Y%m%d_%H%M%S)
-cp -r client client.backup.$(date +%Y%m%d_%H%M%S)
-
-# 4. 拉取最新代码（如果是Git仓库）
-git pull origin main
-
-# 或手动上传所有文件（在本地执行）：
-# rsync -avz --exclude='node_modules' --exclude='dist' ./ root@服务器:/opt/topfac/
-
-# 5. 安装/更新依赖
-npm install
-cd client && npm install && cd ..
-
-# 6. 重新构建前端
-npm run build
-
-# 7. 重启服务
-systemctl restart topfac
-
-# 8. 验证服务状态
-systemctl status topfac openresty
-
-# 9. 查看服务日志
-journalctl -u topfac -n 50 --no-pager
-
-# 10. 测试访问
-curl -s https://topfac.netc2c.com/health | jq .
-```
-
-
 
 ## 🔍 部署目录结构
 
@@ -368,7 +291,6 @@ curl -s https://topfac.netc2c.com/health | jq .
 **证书信息：**
 - 提供商：Let's Encrypt
 - 管理工具：Certbot 1.21.0
-- 证书路径：`/etc/letsencrypt/live/topfac.netc2c.com/`
 - 验证方式：webroot（HTTP-01）
 - 包含域名：topfac.netc2c.com, topfac.nssa.io
 - 有效期：90天
@@ -378,24 +300,6 @@ curl -s https://topfac.netc2c.com/health | jq .
 - 检查时间：每天03:18
 - 续期钩子：`/etc/letsencrypt/renewal-hooks/deploy/reload-openresty.sh`
 - 续期后操作：自动重载OpenResty
-
-**手动操作：**
-
-```bash
-# 查看证书信息
-certbot certificates
-
-# 测试自动续期
-certbot renew --dry-run
-
-# 手动续期
-certbot renew
-
-# 查看证书有效期
-openssl x509 -in /etc/letsencrypt/live/topfac.netc2c.com/cert.pem -noout -dates
-```
-
-
 
 ## 🤝 贡献
 
