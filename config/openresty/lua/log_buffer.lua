@@ -57,10 +57,24 @@ function _M.flush()
     if not log_dict then
         return false, "Shared dict not found"
     end
-    
+
+    -- 使用锁防止并发flush
+    local lock_key = "flush_lock"
+    local lock_ok, lock_err = log_dict:add(lock_key, 1, 5)  -- 5秒超时
+    if not lock_ok then
+        if lock_err == "exists" then
+            -- 其他worker正在flush，跳过
+            return true
+        else
+            ngx.log(ngx.ERR, "[LogBuffer] Failed to acquire lock: ", lock_err)
+            return false
+        end
+    end
+
     -- 获取当前缓冲区大小
     local count = log_dict:get("count") or 0
     if count == 0 then
+        log_dict:delete(lock_key)  -- 释放锁
         return true  -- 没有日志需要刷新
     end
     
@@ -90,18 +104,21 @@ function _M.flush()
         
         -- 关闭文件
         file:close()
-        
+
         -- 重置计数
         log_dict:set("count", 0)
-        
+
         ngx.log(ngx.INFO, "[LogBuffer] Flushed ", write_count, " logs to ", log_file)
     end)
-    
+
+    -- 释放锁
+    log_dict:delete(lock_key)
+
     if not ok then
         ngx.log(ngx.ERR, "[LogBuffer] Flush failed: ", err)
         return false, err
     end
-    
+
     return true
 end
 
