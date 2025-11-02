@@ -330,23 +330,36 @@ onMounted(async () => {
 
     // 动态加载sheetmerge的JS模块
     const scripts = [
-      '/sheetmerge/js/ErrorTypes.js',
-      '/sheetmerge/js/ExcelParser.js',
-      '/sheetmerge/js/DataMerger.js',
-      '/sheetmerge/js/CSVGenerator.js',
-      '/sheetmerge/js/AppController.js'
+      { src: '/sheetmerge/js/ErrorTypes.js', check: () => window.FileTypeError },
+      { src: '/sheetmerge/js/ExcelParser.js', check: () => window.ExcelParser },
+      { src: '/sheetmerge/js/DataMerger.js', check: () => window.DataMerger },
+      { src: '/sheetmerge/js/CSVGenerator.js', check: () => window.CSVGenerator },
+      { src: '/sheetmerge/js/AppController.js', check: () => window.AppController }
     ]
 
-    for (const src of scripts) {
+    for (const { src, check } of scripts) {
       console.log(`加载 ${src}...`)
       const script = document.createElement('script')
       script.src = src
+      script.type = 'text/javascript'
       document.head.appendChild(script)
 
       await new Promise((resolve, reject) => {
-        script.onload = () => {
+        script.onload = async () => {
           console.log(`✓ ${src} 加载成功`)
-          resolve(true)
+
+          // 等待一小段时间确保脚本执行完成
+          await new Promise(r => setTimeout(r, 100))
+
+          // 验证类是否已导出
+          // @ts-ignore
+          if (check()) {
+            console.log(`✓ ${src} 类已正确导出`)
+            resolve(true)
+          } else {
+            console.error(`✗ ${src} 类未正确导出到window对象`)
+            reject(new Error(`${src} 类未正确导出`))
+          }
         }
         script.onerror = (error) => {
           console.error(`✗ ${src} 加载失败:`, error)
