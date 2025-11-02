@@ -172,7 +172,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 
 // 页面元数据
 definePageMeta({
@@ -408,20 +408,22 @@ onMounted(async () => {
         snackbar.value.show = false
       }
       // 打开配置面板：仅生成列复选框并切换到配置视图
-      appController.showConfigPanel = () => {
+      appController.showConfigPanel = async () => {
         showConfig.value = true
         showPreview.value = false
         sheetCount.value = appController.state?.parsedData?.sheets?.length || 0
+        await nextTick()
         appController.generateColumnCheckboxes()
       }
       // 显示预览：更新统计并渲染表格，切换到预览视图
-      appController.showPreview = () => {
+      appController.showPreview = async () => {
         const mergedData = appController.state?.mergedData
         if (!mergedData) return
         totalRows.value = mergedData.rowCount
         totalCols.value = mergedData.colCount
         showPreview.value = true
         showConfig.value = false
+        await nextTick()
         appController.generatePreviewTable()
       }
       // 下载：去除对 #download-btn 的依赖
