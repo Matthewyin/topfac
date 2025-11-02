@@ -93,11 +93,16 @@ class CSVGenerator {
     if (needsEscaping) {
       // 将值中的双引号转义为两个双引号
       stringValue = stringValue.replace(/"/g, '""');
-      
+
       // 用双引号包裹
       return `"${stringValue}"`;
     }
-    
+
     return stringValue;
   }
+}
+
+// 导出到全局对象
+if (typeof window !== 'undefined') {
+  window.CSVGenerator = CSVGenerator;
 }

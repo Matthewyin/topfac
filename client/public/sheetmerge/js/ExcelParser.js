@@ -171,7 +171,12 @@ class ExcelParser {
       letter = String.fromCharCode(65 + (num % 26)) + letter;
       num = Math.floor(num / 26) - 1;
     }
-    
+
     return letter;
   }
+}
+
+// 导出到全局对象
+if (typeof window !== 'undefined') {
+  window.ExcelParser = ExcelParser;
 }

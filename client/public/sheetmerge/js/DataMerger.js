@@ -115,8 +115,13 @@ class DataMerger {
     if (skipEmpty) {
       processedValues = processedValues.filter(value => value !== '');
     }
-    
+
     // 使用分隔符连接值
     return processedValues.join(separator);
   }
+}
+
+// 导出到全局对象
+if (typeof window !== 'undefined') {
+  window.DataMerger = DataMerger;
 }

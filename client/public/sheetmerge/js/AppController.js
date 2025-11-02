@@ -1061,3 +1061,8 @@ class AppController {
     this.reset();
   }
 }
+
+// 导出到全局对象
+if (typeof window !== 'undefined') {
+  window.AppController = AppController;
+}

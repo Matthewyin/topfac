@@ -71,3 +71,14 @@ class DownloadError extends Error {
     this.name = 'DownloadError';
   }
 }
+
+// 导出到全局对象
+if (typeof window !== 'undefined') {
+  window.FileTypeError = FileTypeError;
+  window.FileReadError = FileReadError;
+  window.SheetStructureError = SheetStructureError;
+  window.NoSheetError = NoSheetError;
+  window.NoColumnSelectedError = NoColumnSelectedError;
+  window.MergeError = MergeError;
+  window.DownloadError = DownloadError;
+}

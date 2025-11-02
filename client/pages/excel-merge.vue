@@ -301,58 +301,98 @@ const showMessage = (text: string, color: string = 'success') => {
 
 // 组件挂载后加载SheetJS和应用脚本
 onMounted(async () => {
-  // 动态加载SheetJS
-  const script1 = document.createElement('script')
-  script1.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'
-  document.head.appendChild(script1)
+  try {
+    console.log('开始加载Excel合并工具依赖...')
 
-  await new Promise(resolve => {
-    script1.onload = resolve
-  })
+    // 动态加载SheetJS
+    console.log('加载SheetJS...')
+    const script1 = document.createElement('script')
+    script1.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'
+    document.head.appendChild(script1)
 
-  // 动态加载sheetmerge的JS模块
-  const scripts = [
-    '/sheetmerge/js/ErrorTypes.js',
-    '/sheetmerge/js/ExcelParser.js',
-    '/sheetmerge/js/DataMerger.js',
-    '/sheetmerge/js/CSVGenerator.js',
-    '/sheetmerge/js/AppController.js'
-  ]
-
-  for (const src of scripts) {
-    const script = document.createElement('script')
-    script.src = src
-    document.head.appendChild(script)
-    await new Promise(resolve => {
-      script.onload = resolve
+    await new Promise((resolve, reject) => {
+      script1.onload = () => {
+        console.log('✓ SheetJS加载成功')
+        resolve(true)
+      }
+      script1.onerror = (error) => {
+        console.error('✗ SheetJS加载失败:', error)
+        reject(new Error('SheetJS加载失败'))
+      }
     })
-  }
 
-  // 初始化AppController（不调用init，避免DOM事件冲突）
-  // @ts-ignore
-  if (window.AppController) {
+    // 验证XLSX是否可用
+    // @ts-ignore
+    if (!window.XLSX) {
+      throw new Error('XLSX库未正确加载')
+    }
+    console.log('✓ XLSX库验证通过')
+
+    // 动态加载sheetmerge的JS模块
+    const scripts = [
+      '/sheetmerge/js/ErrorTypes.js',
+      '/sheetmerge/js/ExcelParser.js',
+      '/sheetmerge/js/DataMerger.js',
+      '/sheetmerge/js/CSVGenerator.js',
+      '/sheetmerge/js/AppController.js'
+    ]
+
+    for (const src of scripts) {
+      console.log(`加载 ${src}...`)
+      const script = document.createElement('script')
+      script.src = src
+      document.head.appendChild(script)
+
+      await new Promise((resolve, reject) => {
+        script.onload = () => {
+          console.log(`✓ ${src} 加载成功`)
+          resolve(true)
+        }
+        script.onerror = (error) => {
+          console.error(`✗ ${src} 加载失败:`, error)
+          reject(new Error(`${src} 加载失败`))
+        }
+      })
+    }
+
+    // 验证所有必需的类是否已加载
+    // @ts-ignore
+    const requiredClasses = {
+      'FileTypeError': window.FileTypeError,
+      'ExcelParser': window.ExcelParser,
+      'DataMerger': window.DataMerger,
+      'CSVGenerator': window.CSVGenerator,
+      'AppController': window.AppController
+    }
+
+    const missingClasses = Object.entries(requiredClasses)
+      .filter(([name, cls]) => !cls)
+      .map(([name]) => name)
+
+    if (missingClasses.length > 0) {
+      throw new Error(`以下类未正确加载: ${missingClasses.join(', ')}`)
+    }
+
+    console.log('✓ 所有依赖类验证通过')
+
+    // 初始化AppController（不调用init，避免DOM事件冲突）
     // @ts-ignore
     appController = new window.AppController()
-    console.log('AppController实例已创建')
+    console.log('✓ AppController实例已创建')
 
     // 手动初始化服务实例（不绑定DOM事件）
     // @ts-ignore
-    if (window.ExcelParser) {
-      // @ts-ignore
-      appController.excelParser = new window.ExcelParser()
-    }
+    appController.excelParser = new window.ExcelParser()
     // @ts-ignore
-    if (window.DataMerger) {
-      // @ts-ignore
-      appController.dataMerger = new window.DataMerger()
-    }
+    appController.dataMerger = new window.DataMerger()
     // @ts-ignore
-    if (window.CSVGenerator) {
-      // @ts-ignore
-      appController.csvGenerator = new window.CSVGenerator()
-    }
-  } else {
-    console.error('AppController未加载')
+    appController.csvGenerator = new window.CSVGenerator()
+
+    console.log('✓ Excel合并工具初始化完成')
+    showMessage('系统初始化成功', 'success')
+  } catch (error: any) {
+    console.error('初始化失败:', error)
+    showMessage(`系统初始化失败: ${error.message}`, 'error')
   }
 })
 </script>
