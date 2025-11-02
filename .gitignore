@@ -175,3 +175,6 @@ logs/*
 !logs/.gitkeep
 
 .augment/
+
+# Local ad-hoc test files
+/tmp.xlsx
