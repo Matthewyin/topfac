@@ -330,40 +330,53 @@ onMounted(async () => {
 
     // 动态加载sheetmerge的JS模块
     const scripts = [
-      { src: '/sheetmerge/js/ErrorTypes.js', check: () => window.FileTypeError },
-      { src: '/sheetmerge/js/ExcelParser.js', check: () => window.ExcelParser },
-      { src: '/sheetmerge/js/DataMerger.js', check: () => window.DataMerger },
-      { src: '/sheetmerge/js/CSVGenerator.js', check: () => window.CSVGenerator },
-      { src: '/sheetmerge/js/AppController.js', check: () => window.AppController }
+      { src: '/sheetmerge/js/ErrorTypes.js', check: () => window.FileTypeError, name: 'FileTypeError' },
+      { src: '/sheetmerge/js/ExcelParser.js', check: () => window.ExcelParser, name: 'ExcelParser' },
+      { src: '/sheetmerge/js/DataMerger.js', check: () => window.DataMerger, name: 'DataMerger' },
+      { src: '/sheetmerge/js/CSVGenerator.js', check: () => window.CSVGenerator, name: 'CSVGenerator' },
+      { src: '/sheetmerge/js/AppController.js', check: () => window.AppController, name: 'AppController' }
     ]
 
-    for (const { src, check } of scripts) {
+    // 轮询检查函数：等待类出现在window对象上
+    const waitForClass = async (checkFn: () => any, className: string, maxWaitMs = 5000) => {
+      const startTime = Date.now()
+      const pollInterval = 50 // 每50ms检查一次
+
+      while (Date.now() - startTime < maxWaitMs) {
+        // @ts-ignore
+        if (checkFn()) {
+          return true
+        }
+        await new Promise(r => setTimeout(r, pollInterval))
+      }
+
+      throw new Error(`等待${className}超时（${maxWaitMs}ms）`)
+    }
+
+    for (const { src, check, name } of scripts) {
       console.log(`加载 ${src}...`)
       const script = document.createElement('script')
-      script.src = src
+      script.src = `${src}?t=${Date.now()}` // 添加时间戳防止缓存
       script.type = 'text/javascript'
       document.head.appendChild(script)
 
       await new Promise((resolve, reject) => {
         script.onload = async () => {
-          console.log(`✓ ${src} 加载成功`)
+          console.log(`✓ ${src} 文件加载成功`)
 
-          // 等待一小段时间确保脚本执行完成
-          await new Promise(r => setTimeout(r, 100))
-
-          // 验证类是否已导出
-          // @ts-ignore
-          if (check()) {
-            console.log(`✓ ${src} 类已正确导出`)
+          try {
+            // 使用轮询等待类出现
+            await waitForClass(check, name)
+            console.log(`✓ ${name} 类已正确导出`)
             resolve(true)
-          } else {
-            console.error(`✗ ${src} 类未正确导出到window对象`)
-            reject(new Error(`${src} 类未正确导出`))
+          } catch (error: any) {
+            console.error(`✗ ${src} 类导出失败:`, error.message)
+            reject(error)
           }
         }
         script.onerror = (error) => {
-          console.error(`✗ ${src} 加载失败:`, error)
-          reject(new Error(`${src} 加载失败`))
+          console.error(`✗ ${src} 文件加载失败:`, error)
+          reject(new Error(`${src} 文件加载失败`))
         }
       })
     }
