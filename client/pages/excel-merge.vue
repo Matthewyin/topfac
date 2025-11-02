@@ -233,15 +233,33 @@ const handleDrop = (event: DragEvent) => {
 }
 
 // 处理文件
-const handleFile = (file: File) => {
-  if (appController) {
-    // 模拟原始的文件输入事件
-    const fakeEvent = {
-      target: {
-        files: [file]
-      }
+const handleFile = async (file: File) => {
+  if (!appController) {
+    showMessage('系统初始化中，请稍后再试', 'error')
+    return
+  }
+
+  try {
+    loading.value = true
+    loadingText.value = '正在读取文件...'
+
+    // 直接调用AppController的handleFileUpload方法
+    await appController.handleFileUpload(file)
+
+    // 文件上传成功后，显示配置面板
+    showConfig.value = true
+
+    // 更新sheet数量
+    if (appController.state.parsedData) {
+      sheetCount.value = appController.state.parsedData.sheets.length
     }
-    appController.handleFileSelect(fakeEvent)
+
+    loading.value = false
+    showMessage('文件上传成功！', 'success')
+  } catch (error: any) {
+    loading.value = false
+    showMessage(error.message || '文件处理失败', 'error')
+    console.error('文件处理错误:', error)
   }
 }
 
@@ -310,12 +328,31 @@ onMounted(async () => {
     })
   }
 
-  // 初始化AppController
+  // 初始化AppController（不调用init，避免DOM事件冲突）
   // @ts-ignore
   if (window.AppController) {
     // @ts-ignore
     appController = new window.AppController()
-    appController.init()
+    console.log('AppController实例已创建')
+
+    // 手动初始化服务实例（不绑定DOM事件）
+    // @ts-ignore
+    if (window.ExcelParser) {
+      // @ts-ignore
+      appController.excelParser = new window.ExcelParser()
+    }
+    // @ts-ignore
+    if (window.DataMerger) {
+      // @ts-ignore
+      appController.dataMerger = new window.DataMerger()
+    }
+    // @ts-ignore
+    if (window.CSVGenerator) {
+      // @ts-ignore
+      appController.csvGenerator = new window.CSVGenerator()
+    }
+  } else {
+    console.error('AppController未加载')
   }
 })
 </script>
