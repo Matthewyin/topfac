@@ -454,6 +454,23 @@ onMounted(async () => {
         }
       }
 
+      // 同步合并按钮状态到 Vue：取代 DOM 直接禁用
+      appController.updateMergeButtonState = () => {
+        const len = appController?.state?.config?.selectedColumns?.length || 0
+        canMerge.value = len > 0
+      }
+      // 合并过程：防止重复点击
+      const __origHandleMerge = appController.handleMerge.bind(appController)
+      appController.handleMerge = async () => {
+        try {
+          canMerge.value = false
+          await __origHandleMerge()
+        } finally {
+          const len = appController?.state?.config?.selectedColumns?.length || 0
+          canMerge.value = len > 0
+        }
+      }
+
       console.log('✓ AppController实例已创建')
     } else {
       console.log('↩︎ 复用已有 AppController 实例')
