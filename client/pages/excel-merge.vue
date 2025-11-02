@@ -265,29 +265,31 @@ const handleFile = async (file: File) => {
 
 // 全选列
 const selectAllColumns = () => {
-  document.getElementById('select-all')?.click()
+  if (appController) appController.selectAllColumns()
 }
 
 // 取消全选
 const deselectAllColumns = () => {
-  document.getElementById('deselect-all')?.click()
+  if (appController) appController.deselectAllColumns()
 }
 
 // 开始合并
 const startMerge = () => {
-  document.getElementById('merge-btn')?.click()
+  if (appController) appController.handleMerge()
 }
 
 // 下载CSV
 const downloadCSV = () => {
-  document.getElementById('download-btn')?.click()
+  if (appController) appController.handleDownload()
 }
 
-// 重置
+// 重新配置（从预览返回配置）
 const reset = () => {
-  document.getElementById('reset-btn')?.click()
-  showConfig.value = false
+  if (appController) {
+    appController.state.mergedData = null
+  }
   showPreview.value = false
+  showConfig.value = true
 }
 
 // 显示消息
@@ -389,6 +391,67 @@ onMounted(async () => {
       appController.excelParser = new w.ExcelParser()
       appController.dataMerger = new w.DataMerger()
       appController.csvGenerator = new w.CSVGenerator()
+
+      // 将 AppController 的 UI 方法桥接到 Vue 组件，避免依赖原生 DOM ID
+      appController.showLoading = (text: string = '处理中...') => {
+        loadingText.value = text
+        loading.value = true
+      }
+      appController.hideLoading = () => {
+        loading.value = false
+      }
+      appController.showMessage = (type: string, text: string) => {
+        const colorMap: Record<string, string> = { info: 'info', success: 'success', error: 'error', warning: 'warning' }
+        showMessage(text, colorMap[type] || 'info')
+      }
+      appController.hideMessage = () => {
+        snackbar.value.show = false
+      }
+      // 打开配置面板：仅生成列复选框并切换到配置视图
+      appController.showConfigPanel = () => {
+        showConfig.value = true
+        showPreview.value = false
+        sheetCount.value = appController.state?.parsedData?.sheets?.length || 0
+        appController.generateColumnCheckboxes()
+      }
+      // 显示预览：更新统计并渲染表格，切换到预览视图
+      appController.showPreview = () => {
+        const mergedData = appController.state?.mergedData
+        if (!mergedData) return
+        totalRows.value = mergedData.rowCount
+        totalCols.value = mergedData.colCount
+        showPreview.value = true
+        showConfig.value = false
+        appController.generatePreviewTable()
+      }
+      // 下载：去除对 #download-btn 的依赖
+      appController.handleDownload = () => {
+        try {
+          const { mergedData, currentFile } = appController.state
+          if (!mergedData) throw new w.DownloadError('没有可下载的数据')
+          appController.showLoading('正在生成文件...')
+          setTimeout(() => {
+            try {
+              const csvContent = appController.csvGenerator.generateCSV(mergedData)
+              let fileName = 'merged.csv'
+              if (currentFile && currentFile.name) {
+                const originalName = currentFile.name.replace(/\.(xlsx|xls)$/i, '')
+                fileName = `${originalName}_merged.csv`
+              }
+              appController.csvGenerator.downloadCSV(csvContent, fileName)
+              appController.hideLoading()
+              appController.showMessage('success', `文件下载成功：${fileName}`)
+            } catch (err: any) {
+              appController.hideLoading()
+              appController.showMessage('error', err?.message || '生成失败')
+            }
+          }, 100)
+        } catch (err: any) {
+          appController.hideLoading()
+          appController.showMessage('error', err?.message || '下载失败')
+        }
+      }
+
       console.log('✓ AppController实例已创建')
     } else {
       console.log('↩︎ 复用已有 AppController 实例')
