@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preview Test - Excel Sheet Merger</title>
+  
+  <!-- CSS文件 -->
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Preview Functionality Test</h1>
+    </div>
+
+    <div class="main-content">
+      <!-- Hidden elements needed for initialization -->
+      <div id="upload-area" class="upload-zone hidden">
+        <input type="file" id="file-input" accept=".xlsx,.xls" hidden>
+      </div>
+      
+      <div id="config-panel" class="config-section hidden">
+        <div class="sheet-info">
+          <p>检测到 <strong id="sheet-count">0</strong> 个工作表</p>
+        </div>
+        <div class="column-selection">
+          <div class="column-checkboxes" id="column-list"></div>
+          <div class="quick-actions">
+            <button id="select-all" class="secondary-btn">全选</button>
+            <button id="deselect-all" class="secondary-btn">取消全选</button>
+          </div>
+        </div>
+        <div class="separator-config">
+          <select id="separator-select">
+            <option value="\n" selected>换行符 (\n)</option>
+          </select>
+          <input type="text" id="custom-separator" class="hidden">
+        </div>
+        <div class="other-options">
+          <label>
+            <input type="checkbox" id="skip-empty" checked>
+            跳过空单元格
+          </label>
+        </div>
+        <button id="merge-btn" class="primary-btn" disabled>开始合并</button>
+      </div>
+      
+      <!-- 预览区域 -->
+      <div id="preview-section" class="preview-area hidden">
+        <h3>合并结果预览 (前10行)</h3>
+        <div class="preview-info">
+          <span>总行数: <strong id="total-rows">0</strong></span>
+          <span>总列数: <strong id="total-cols">0</strong></span>
+        </div>
+        <div class="table-container">
+          <table id="preview-table">
+            <!-- 动态生成表格 -->
+          </table>
+        </div>
+        <div class="preview-actions">
+          <button id="download-btn" class="primary-btn">下载CSV文件</button>
+          <button id="reset-btn" class="secondary-btn">重新配置</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 消息提示 -->
+  <div id="message-container" class="message-box hidden">
+    <span class="message-icon"></span>
+    <span class="message-text"></span>
+    <button class="message-close">×</button>
+  </div>
+
+  <!-- 加载动画 -->
+  <div id="loading-overlay" class="loading-overlay hidden">
+    <div class="loading-content">
+      <div class="spinner"></div>
+      <div class="loading-text" id="loading-text">处理中...</div>
+    </div>
+  </div>
+
+  <!-- SheetJS Library -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  
+  <!-- JavaScript文件 -->
+  <script src="js/ExcelParser.js"></script>
+  <script src="js/DataMerger.js"></script>
+  <script src="js/CSVGenerator.js"></script>
+  <script src="js/AppController.js"></script>
+  
+  <script>
+    // Test script to verify preview functionality
+    document.addEventListener('DOMContentLoaded', () => {
+      const app = new AppController();
+      app.init();
+      
+      // Create mock merged data
+      const mockMergedData = {
+        headers: ['姓名', '部门', '工作内容', '备注'],
+        rows: [
+          ['张三\n李四\n王五', '技术部\n技术部\n技术部', '开发功能A\n开发功能B\n代码审查', '完成'],
+          ['赵六\n孙七', '产品部\n产品部', '需求分析\n原型设计', '进行中'],
+          ['周八', '设计部', 'UI设计', '待开始'],
+          ['吴九\n郑十', '测试部\n测试部', '功能测试\n性能测试', '完成'],
+          ['钱十一', '运维部', '服务器维护', '完成'],
+          ['陈十二\n林十三\n黄十四', '市场部\n市场部\n市场部', '市场调研\n活动策划\n数据分析', '进行中'],
+          ['刘十五', '人事部', '招聘面试', '待开始'],
+          ['杨十六\n朱十七', '财务部\n财务部', '预算编制\n报表审核', '完成'],
+          ['何十八', '法务部', '合同审查', '进行中'],
+          ['许十九\n宋二十', '客服部\n客服部', '客户咨询\n问题处理', '完成']
+        ],
+        rowCount: 10,
+        colCount: 4,
+        mergedColumns: [0, 1, 2]  // 前三列被合并
+      };
+      
+      // Set the mock data
+      app.state.mergedData = mockMergedData;
+      
+      // Display preview
+      app.showPreview();
+      
+      console.log('Preview test initialized with mock data');
+    });
+  </script>
+</body>
+</html>

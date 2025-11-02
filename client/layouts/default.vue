@@ -57,6 +57,20 @@
           value="topology-projects"
           :to="'/topology-projects'"
         />
+
+        <v-divider class="my-2" />
+
+        <!-- 工具集 -->
+        <v-list-subheader class="text-grey-darken-1 font-weight-medium">
+          工具集
+        </v-list-subheader>
+
+        <v-list-item
+          prepend-icon="mdi-file-excel-outline"
+          title="Excel合并"
+          value="excel-merge"
+          :to="'/excel-merge'"
+        />
       </v-list>
     </v-navigation-drawer>
 

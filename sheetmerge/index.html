@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Excel Sheet Merger - 多Sheet页Excel合并工具</title>
+  
+  <!-- 
+    CSS样式文件
+    - base.css: 基础样式和CSS变量定义
+    - layout.css: 布局和响应式设计
+    - components.css: 组件样式（按钮、表单、表格等）
+  -->
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+  <div class="container">
+    <!-- 
+      ========================================
+      头部区域
+      显示应用标题和简介
+      ========================================
+    -->
+    <div class="header">
+      <h1>Excel Sheet Merger</h1>
+      <p>多Sheet页Excel合并工具</p>
+    </div>
+
+    <!-- 
+      ========================================
+      隐私说明
+      向用户明确说明所有数据处理均在本地完成
+      ========================================
+    -->
+    <div class="privacy-notice">
+      <span class="icon">🔒</span>
+      <p>所有数据处理均在本地完成，不会上传到服务器</p>
+    </div>
+
+    <!-- 
+      ========================================
+      使用说明
+      提供清晰的三步操作指引
+      ========================================
+    -->
+    <div class="instructions">
+      <h3>使用步骤：</h3>
+      <ol>
+        <li>上传包含多个sheet页的Excel文件（.xlsx或.xls格式）</li>
+        <li>选择需要合并的列，配置分隔符和其他选项</li>
+        <li>预览合并结果，确认无误后下载CSV文件</li>
+      </ol>
+    </div>
+
+    <!-- 
+      ========================================
+      主内容区域
+      包含三个主要部分：文件上传、配置面板、预览区域
+      ========================================
+    -->
+    <div class="main-content">
+      <!-- 
+        文件上传区域
+        支持点击选择和拖拽上传两种方式
+        只接受.xlsx和.xls格式的Excel文件
+      -->
+      <div id="upload-area" class="upload-zone">
+        <input type="file" id="file-input" accept=".xlsx,.xls" hidden>
+        <div class="upload-prompt">
+          <span class="icon">📁</span>
+          <p>点击或拖拽Excel文件到此处</p>
+          <small>支持 .xlsx 和 .xls 格式</small>
+        </div>
+      </div>
+
+      <!-- 
+        配置面板
+        文件上传成功后显示，允许用户配置合并选项
+      -->
+      <div id="config-panel" class="config-section hidden">
+        <h3>配置合并选项</h3>
+        
+        <!-- Sheet信息：显示检测到的工作表数量 -->
+        <div class="sheet-info">
+          <p>检测到 <strong id="sheet-count">0</strong> 个工作表</p>
+        </div>
+        
+        <!-- 
+          列选择区域
+          提示：选择需要合并的列，未选择的列将保留第一个sheet的值
+        -->
+        <div class="column-selection">
+          <label>选择要合并的列：</label>
+          <p class="help-text">💡 提示：选中的列将合并所有sheet页的内容，未选中的列保留第一个sheet的值</p>
+          <div class="column-checkboxes" id="column-list">
+            <!-- 动态生成复选框 -->
+          </div>
+          <div class="quick-actions">
+            <button id="select-all" class="secondary-btn">全选</button>
+            <button id="deselect-all" class="secondary-btn">取消全选</button>
+          </div>
+        </div>
+        
+        <!-- 
+          分隔符配置
+          提示：选择合并单元格值时使用的分隔符
+        -->
+        <div class="separator-config">
+          <label>合并分隔符：</label>
+          <p class="help-text">💡 提示：多个sheet的同一单元格值将用此分隔符连接</p>
+          <select id="separator-select">
+            <option value="\n" selected>换行符 (\n)</option>
+            <option value=",">逗号 (,)</option>
+            <option value=";">分号 (;)</option>
+            <option value="|">竖线 (|)</option>
+            <option value="custom">自定义</option>
+          </select>
+          <input type="text" id="custom-separator" class="hidden" placeholder="输入自定义分隔符">
+        </div>
+        
+        <!-- 
+          其他选项
+          提示：跳过空单元格可以避免合并结果中出现多余的分隔符
+        -->
+        <div class="other-options">
+          <label>
+            <input type="checkbox" id="skip-empty" checked>
+            跳过空单元格
+          </label>
+          <p class="help-text">💡 提示：勾选后，合并时将忽略空单元格，避免多余的分隔符</p>
+        </div>
+        
+        <button id="merge-btn" class="primary-btn" disabled>开始合并</button>
+      </div>
+
+      <!-- 
+        预览区域
+        显示合并结果的前10行，以及统计信息
+      -->
+      <div id="preview-section" class="preview-area hidden">
+        <h3>合并结果预览 (前10行)</h3>
+        <div class="preview-info">
+          <span>总行数: <strong id="total-rows">0</strong></span>
+          <span>总列数: <strong id="total-cols">0</strong></span>
+        </div>
+        <div class="table-container">
+          <table id="preview-table">
+            <!-- 动态生成表格 -->
+          </table>
+        </div>
+        <div class="preview-actions">
+          <button id="download-btn" class="primary-btn">下载CSV文件</button>
+          <button id="reset-btn" class="secondary-btn">重新配置</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 
+    ========================================
+    消息提示组件
+    用于显示成功、错误、警告等各类提示信息
+    ========================================
+  -->
+  <div id="message-container" class="message-box hidden">
+    <span class="message-icon"></span>
+    <span class="message-text"></span>
+    <button class="message-close">×</button>
+  </div>
+
+  <!-- 
+    ========================================
+    加载动画覆盖层
+    在文件解析、数据合并等耗时操作时显示
+    ========================================
+  -->
+  <div id="loading-overlay" class="loading-overlay hidden">
+    <div class="loading-content">
+      <div class="spinner"></div>
+      <div class="loading-text" id="loading-text">处理中...</div>
+    </div>
+  </div>
+
+  <!-- 
+    ========================================
+    外部依赖库
+    SheetJS: 用于在浏览器中解析Excel文件
+    ========================================
+  -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  
+  <!-- 
+    ========================================
+    JavaScript模块
+    按依赖顺序加载：
+    1. ErrorTypes: 自定义错误类型定义
+    2. ExcelParser: Excel文件解析服务
+    3. DataMerger: 数据合并服务
+    4. CSVGenerator: CSV生成和下载服务
+    5. AppController: 应用控制器，协调各模块
+    6. main: 应用入口，初始化控制器
+    ========================================
+  -->
+  <script src="js/ErrorTypes.js"></script>
+  <script src="js/ExcelParser.js"></script>
+  <script src="js/DataMerger.js"></script>
+  <script src="js/CSVGenerator.js"></script>
+  <script src="js/AppController.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

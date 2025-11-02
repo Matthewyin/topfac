@@ -1,0 +1,431 @@
+/* 容器 */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+/* 头部 */
+.header {
+  background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+  color: white;
+  padding: 24px;
+  text-align: center;
+}
+
+.header h1 {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+.header p {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+/* 隐私说明 */
+.privacy-notice {
+  background-color: #E6F7FF;
+  border-left: 4px solid #4A90E2;
+  padding: 12px 16px;
+  margin: 16px 24px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.privacy-notice .icon {
+  font-size: 20px;
+}
+
+.privacy-notice p {
+  margin: 0;
+  font-size: 14px;
+  color: #0050B3;
+}
+
+/* 使用说明 */
+.instructions {
+  padding: 16px 24px;
+  background-color: #FAFAFA;
+  border-bottom: 1px solid #E8E8E8;
+}
+
+.instructions h3 {
+  font-size: 16px;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.instructions ol {
+  margin-left: 20px;
+  font-size: 14px;
+  color: #666;
+}
+
+.instructions li {
+  margin-bottom: 4px;
+}
+
+/* 主内容区域 */
+.main-content {
+  padding: 24px;
+}
+
+/* 文件上传区域 */
+.upload-zone {
+  border: 2px dashed #D9D9D9;
+  border-radius: 8px;
+  padding: 48px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background-color: #FAFAFA;
+}
+
+.upload-zone:hover {
+  border-color: #4A90E2;
+  background-color: #F0F7FF;
+}
+
+.upload-zone.drag-over {
+  border-color: #4A90E2;
+  background-color: #E6F7FF;
+  transform: scale(1.02);
+}
+
+.upload-prompt .icon {
+  font-size: 48px;
+  display: block;
+  margin-bottom: 16px;
+}
+
+.upload-prompt p {
+  font-size: 16px;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.upload-prompt small {
+  font-size: 14px;
+  color: #999;
+}
+
+/* 配置面板 */
+.config-section {
+  margin-top: 24px;
+}
+
+.config-section h3 {
+  font-size: 18px;
+  margin-bottom: 16px;
+  color: #333;
+  border-bottom: 2px solid #4A90E2;
+  padding-bottom: 8px;
+}
+
+.sheet-info {
+  background-color: #F0F7FF;
+  padding: 12px 16px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+
+.sheet-info p {
+  margin: 0;
+  font-size: 14px;
+  color: #0050B3;
+}
+
+.sheet-info strong {
+  color: #4A90E2;
+  font-size: 16px;
+}
+
+.sheet-info ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.sheet-info li {
+  padding: 4px 0;
+  border-bottom: 1px solid #E6F7FF;
+}
+
+.sheet-info li:last-child {
+  border-bottom: none;
+}
+
+/* 列选择 */
+.column-selection {
+  margin-bottom: 16px;
+}
+
+.column-selection > label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.column-checkboxes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 12px;
+  background-color: #FAFAFA;
+  border-radius: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.column-checkboxes label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.column-checkboxes label:hover {
+  background-color: #E6F7FF;
+}
+
+.column-checkboxes input[type="checkbox"] {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+}
+
+.quick-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* 分隔符配置 */
+.separator-config {
+  margin-bottom: 16px;
+}
+
+.separator-config label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.separator-config select,
+.separator-config input[type="text"] {
+  width: 100%;
+  max-width: 300px;
+  padding: 8px 12px;
+  border: 1px solid #D9D9D9;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color 0.3s;
+}
+
+.separator-config select:focus,
+.separator-config input[type="text"]:focus {
+  outline: none;
+  border-color: #4A90E2;
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.1);
+}
+
+.separator-config input[type="text"] {
+  margin-top: 8px;
+}
+
+/* 其他选项 */
+.other-options {
+  margin-bottom: 24px;
+}
+
+.other-options label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  width: fit-content;
+}
+
+.other-options label:hover {
+  background-color: #F0F7FF;
+}
+
+.other-options input[type="checkbox"] {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+}
+
+/* 预览区域 */
+.preview-area {
+  margin-top: 24px;
+}
+
+.preview-area h3 {
+  font-size: 18px;
+  margin-bottom: 16px;
+  color: #333;
+  border-bottom: 2px solid #52C41A;
+  padding-bottom: 8px;
+}
+
+.preview-info {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background-color: #F6FFED;
+  border-radius: 4px;
+}
+
+.preview-info span {
+  font-size: 14px;
+  color: #389E0D;
+}
+
+.preview-info strong {
+  color: #52C41A;
+  font-size: 16px;
+}
+
+.table-container {
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: 500px;
+  margin-bottom: 16px;
+  border: 1px solid #E8E8E8;
+  border-radius: 4px;
+}
+
+#preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+#preview-table th {
+  background-color: #FAFAFA;
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 2px solid #E8E8E8;
+  color: #333;
+  position: sticky;
+  top: 0;
+}
+
+#preview-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #F0F0F0;
+  color: #666;
+}
+
+#preview-table tr:hover {
+  background-color: #FAFAFA;
+}
+
+#preview-table td.merged-column {
+  background-color: #FFF7E6;
+}
+
+.preview-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .header h1 {
+    font-size: 22px;
+  }
+
+  .header p {
+    font-size: 12px;
+  }
+
+  .main-content {
+    padding: 16px;
+  }
+
+  .privacy-notice,
+  .instructions {
+    margin: 12px 16px;
+    padding: 10px 12px;
+  }
+
+  .upload-zone {
+    padding: 32px 16px;
+  }
+
+  .upload-prompt .icon {
+    font-size: 36px;
+  }
+
+  .column-checkboxes {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+
+  .quick-actions {
+    flex-direction: column;
+  }
+
+  .quick-actions button {
+    width: 100%;
+  }
+
+  .preview-info {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .preview-actions {
+    flex-direction: column;
+  }
+
+  .preview-actions button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .header h1 {
+    font-size: 18px;
+  }
+
+  .config-section h3,
+  .preview-area h3 {
+    font-size: 16px;
+  }
+
+  .column-checkboxes {
+    grid-template-columns: 1fr;
+  }
+
+  #preview-table {
+    font-size: 12px;
+  }
+
+  #preview-table th,
+  #preview-table td {
+    padding: 8px;
+  }
+}
