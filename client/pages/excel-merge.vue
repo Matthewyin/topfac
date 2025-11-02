@@ -211,6 +211,104 @@ const separatorOptions = [
 // SheetJS和AppController实例
 let appController: any = null
 
+// 将 AppController 的 UI 方法桥接到 Vue 组件（幂等）
+const bridgeAppController = (w: any) => {
+  if (!appController) return
+  // 加载/消息
+  appController.showLoading = (text: string = '处理中...') => {
+    loadingText.value = text
+    loading.value = true
+  }
+  appController.hideLoading = () => {
+    loading.value = false
+  }
+  appController.showMessage = (type: string, text: string) => {
+    const colorMap: Record<string, string> = { info: 'info', success: 'success', error: 'error', warning: 'warning' }
+    showMessage(text, colorMap[type] || 'info')
+  }
+  appController.hideMessage = () => {
+    snackbar.value.show = false
+  }
+  // 配置与预览视图切换（等待 DOM 渲染）
+  appController.showConfigPanel = async () => {
+    showConfig.value = true
+    showPreview.value = false
+    sheetCount.value = appController.state?.parsedData?.sheets?.length || 0
+    await nextTick()
+    appController.generateColumnCheckboxes()
+  }
+  appController.showPreview = async () => {
+    const mergedData = appController.state?.mergedData
+    if (!mergedData) return
+    totalRows.value = mergedData.rowCount
+    totalCols.value = mergedData.colCount
+    showPreview.value = true
+    showConfig.value = false
+    await nextTick()
+    appController.generatePreviewTable()
+  }
+  // 下载（不依赖 #download-btn）
+  appController.handleDownload = () => {
+    try {
+      const { mergedData, currentFile } = appController.state
+      if (!mergedData) throw new (window as any).DownloadError('没有可下载的数据')
+      appController.showLoading('正在生成文件...')
+      setTimeout(() => {
+        try {
+          const csvContent = appController.csvGenerator.generateCSV(mergedData)
+          let fileName = 'merged.csv'
+          if (currentFile && currentFile.name) {
+            const originalName = currentFile.name.replace(/\.(xlsx|xls)$/i, '')
+            fileName = `${originalName}_merged.csv`
+          }
+          appController.csvGenerator.downloadCSV(csvContent, fileName)
+          appController.hideLoading()
+          appController.showMessage('success', `文件下载成功：${fileName}`)
+        } catch (err: any) {
+          appController.hideLoading()
+          appController.showMessage('error', err?.message || '生成失败')
+        }
+      }, 100)
+    } catch (err: any) {
+      appController.hideLoading()
+      appController.showMessage('error', err?.message || '下载失败')
+    }
+  }
+  // 同步按钮状态
+  appController.updateMergeButtonState = () => {
+    const len = appController?.state?.config?.selectedColumns?.length || 0
+    canMerge.value = len > 0
+  }
+  // 包装合并，防重复点击
+  const __origHandleMerge = appController.handleMerge.bind(appController)
+  appController.handleMerge = async () => {
+    try {
+      canMerge.value = false
+      await __origHandleMerge()
+    } finally {
+      const len = appController?.state?.config?.selectedColumns?.length || 0
+      canMerge.value = len > 0
+    }
+  }
+}
+
+// 确保 AppController 已就绪（等待脚本 -> 创建实例 -> 桥接），可多次调用
+const ensureAppControllerReady = async () => {
+  const w: any = window as any
+  if (w.__sheetmergeLoader) await w.__sheetmergeLoader
+  if (!appController) {
+    appController = new w.AppController()
+    appController.excelParser = new w.ExcelParser()
+    appController.dataMerger = new w.DataMerger()
+    appController.csvGenerator = new w.CSVGenerator()
+    bridgeAppController(w)
+    console.log('✓ AppController实例已创建')
+  } else {
+    console.log('↩︎ 复用已有 AppController 实例')
+  }
+  return appController
+}
+
 // 触发文件选择
 const triggerFileInput = () => {
   fileInput.value?.click()
@@ -234,12 +332,10 @@ const handleDrop = (event: DragEvent) => {
 
 // 处理文件
 const handleFile = async (file: File) => {
-  if (!appController) {
-    showMessage('系统初始化中，请稍后再试', 'error')
-    return
-  }
-
   try {
+    // 确保控制器已就绪（用户可能在脚本加载完成前就选择了文件）
+    await ensureAppControllerReady()
+
     loading.value = true
     loadingText.value = '正在读取文件...'
 
@@ -264,18 +360,21 @@ const handleFile = async (file: File) => {
 }
 
 // 全选列
-const selectAllColumns = () => {
-  if (appController) appController.selectAllColumns()
+const selectAllColumns = async () => {
+  await ensureAppControllerReady()
+  appController.selectAllColumns()
 }
 
 // 取消全选
-const deselectAllColumns = () => {
-  if (appController) appController.deselectAllColumns()
+const deselectAllColumns = async () => {
+  await ensureAppControllerReady()
+  appController.deselectAllColumns()
 }
 
 // 开始合并
-const startMerge = () => {
-  if (appController) appController.handleMerge()
+const startMerge = async () => {
+  await ensureAppControllerReady()
+  appController.handleMerge()
 }
 
 // 下载CSV
@@ -385,96 +484,8 @@ onMounted(async () => {
     // 等待全局加载完成
     await w.__sheetmergeLoader
 
-    // 初始化AppController（不调用init，避免DOM事件冲突）；若已创建可复用
-    if (!appController) {
-      appController = new w.AppController()
-      appController.excelParser = new w.ExcelParser()
-      appController.dataMerger = new w.DataMerger()
-      appController.csvGenerator = new w.CSVGenerator()
-
-      // 将 AppController 的 UI 方法桥接到 Vue 组件，避免依赖原生 DOM ID
-      appController.showLoading = (text: string = '处理中...') => {
-        loadingText.value = text
-        loading.value = true
-      }
-      appController.hideLoading = () => {
-        loading.value = false
-      }
-      appController.showMessage = (type: string, text: string) => {
-        const colorMap: Record<string, string> = { info: 'info', success: 'success', error: 'error', warning: 'warning' }
-        showMessage(text, colorMap[type] || 'info')
-      }
-      appController.hideMessage = () => {
-        snackbar.value.show = false
-      }
-      // 打开配置面板：仅生成列复选框并切换到配置视图
-      appController.showConfigPanel = async () => {
-        showConfig.value = true
-        showPreview.value = false
-        sheetCount.value = appController.state?.parsedData?.sheets?.length || 0
-        await nextTick()
-        appController.generateColumnCheckboxes()
-      }
-      // 显示预览：更新统计并渲染表格，切换到预览视图
-      appController.showPreview = async () => {
-        const mergedData = appController.state?.mergedData
-        if (!mergedData) return
-        totalRows.value = mergedData.rowCount
-        totalCols.value = mergedData.colCount
-        showPreview.value = true
-        showConfig.value = false
-        await nextTick()
-        appController.generatePreviewTable()
-      }
-      // 下载：去除对 #download-btn 的依赖
-      appController.handleDownload = () => {
-        try {
-          const { mergedData, currentFile } = appController.state
-          if (!mergedData) throw new w.DownloadError('没有可下载的数据')
-          appController.showLoading('正在生成文件...')
-          setTimeout(() => {
-            try {
-              const csvContent = appController.csvGenerator.generateCSV(mergedData)
-              let fileName = 'merged.csv'
-              if (currentFile && currentFile.name) {
-                const originalName = currentFile.name.replace(/\.(xlsx|xls)$/i, '')
-                fileName = `${originalName}_merged.csv`
-              }
-              appController.csvGenerator.downloadCSV(csvContent, fileName)
-              appController.hideLoading()
-              appController.showMessage('success', `文件下载成功：${fileName}`)
-            } catch (err: any) {
-              appController.hideLoading()
-              appController.showMessage('error', err?.message || '生成失败')
-            }
-          }, 100)
-        } catch (err: any) {
-          appController.hideLoading()
-          appController.showMessage('error', err?.message || '下载失败')
-        }
-      }
-
-      // 同步合并按钮状态到 Vue：取代 DOM 直接禁用
-      appController.updateMergeButtonState = () => {
-        const len = appController?.state?.config?.selectedColumns?.length || 0
-        canMerge.value = len > 0
-      }
-      // 合并过程：防止重复点击
-      const __origHandleMerge = appController.handleMerge.bind(appController)
-      appController.handleMerge = async () => {
-        try {
-          canMerge.value = false
-          await __origHandleMerge()
-        } finally {
-          const len = appController?.state?.config?.selectedColumns?.length || 0
-          canMerge.value = len > 0
-        }
-      }
-
-      console.log('✓ AppController实例已创建')
-    } else {
-      console.log('↩︎ 复用已有 AppController 实例')
-    }
+    // 确保 AppController 已就绪（统一封装，可复用）
+    await ensureAppControllerReady()
 
     console.log('✓ Excel合并工具初始化完成')
     showMessage('系统初始化成功', 'success')
