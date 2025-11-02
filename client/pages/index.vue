@@ -13,43 +13,92 @@
 
 
 
-      <!-- 功能导航卡片 -->
-      <v-row justify="center" class="responsive-grid">
-        <v-col cols="12" md="6" lg="5">
-          <v-card
-            class="dashboard-card responsive-card"
-            elevation="4"
-            hover
-            @click="navigateToProjects"
-          >
-          <v-card-text class="pa-6">
-            <div class="text-center">
-              <v-avatar size="80" color="primary" class="mb-4">
-                <v-icon size="40" color="white">mdi-sitemap</v-icon>
-              </v-avatar>
-
-              <h2 class="text-h5 font-weight-bold mb-3">
-                智能拓扑生成
-              </h2>
-
-              <p class="text-body-1 text-medium-emphasis mb-4">
-                基于自然语言描述生成网络拓扑图，支持DrawIO格式输出
-              </p>
-
-              <!-- 功能说明 -->
-              <div class="text-center">
-                <p class="text-body-2 text-medium-emphasis">
-                  通过自然语言描述快速生成专业的网络拓扑图
-                </p>
-              </div>
-            </div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-
-
-
+      <!-- 首页选项卡（拓扑生成 / Excel 合并） -->
+      <v-row class="mb-2" justify="center">
+        <v-col cols="12" md="8" lg="6">
+          <v-tabs v-model="homeTab" align-tabs="center">
+            <v-tab value="topo">拓扑生成</v-tab>
+            <v-tab value="excel">Excel合并</v-tab>
+          </v-tabs>
+        </v-col>
       </v-row>
+
+      <v-window v-model="homeTab">
+        <!-- Tab: 拓扑生成（保留原首页卡片） -->
+        <v-window-item value="topo">
+          <v-row justify="center" class="responsive-grid">
+            <v-col cols="12" md="6" lg="5">
+              <v-card
+                class="dashboard-card responsive-card"
+                elevation="4"
+                hover
+                @click="navigateToProjects"
+              >
+                <v-card-text class="pa-6">
+                  <div class="text-center">
+                    <v-avatar size="80" color="primary" class="mb-4">
+                      <v-icon size="40" color="white">mdi-sitemap</v-icon>
+                    </v-avatar>
+
+                    <h2 class="text-h5 font-weight-bold mb-3">
+                      智能拓扑生成
+                    </h2>
+
+                    <p class="text-body-1 text-medium-emphasis mb-4">
+                      基于自然语言描述生成网络拓扑图，支持DrawIO格式输出
+                    </p>
+
+                    <div class="text-center">
+                      <p class="text-body-2 text-medium-emphasis">
+                        通过自然语言描述快速生成专业的网络拓扑图
+                      </p>
+                    </div>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+        </v-window-item>
+
+        <!-- Tab: Excel 合并（按钮 + 说明，风格保持一致） -->
+        <v-window-item value="excel">
+          <v-row justify="center" class="responsive-grid">
+            <v-col cols="12" md="6" lg="5">
+              <v-card
+                class="dashboard-card responsive-card"
+                elevation="4"
+                hover
+              >
+                <v-card-text class="pa-6">
+                  <div class="text-center">
+                    <v-avatar size="80" color="green" class="mb-4">
+                      <v-icon size="40" color="white">mdi-file-excel-outline</v-icon>
+                    </v-avatar>
+
+                    <h2 class="text-h5 font-weight-bold mb-3">
+                      Excel 合并
+                    </h2>
+
+                    <p class="text-body-1 text-medium-emphasis mb-4">
+                      本地合并多个 sheet，支持预览与导出 CSV，数据不上传服务器
+                    </p>
+
+                    <div class="text-center">
+                      <p class="text-body-2 text-medium-emphasis">
+                        点击进入完整工具页进行配置与合并
+                      </p>
+                    </div>
+
+                    <v-btn color="primary" class="mt-4" @click="goExcel">
+                      打开 Excel 合并
+                    </v-btn>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+        </v-window-item>
+      </v-window>
 
 
     </v-container>
@@ -65,6 +114,13 @@ definePageMeta({
 
 // 响应式数据
 const router = useRouter()
+
+// 首页选项卡：默认显示“拓扑生成”
+const homeTab = ref<'topo' | 'excel'>('topo')
+
+// 跳转到 Excel 合并页面
+const goExcel = () => router.push('/excel-merge')
+
 
 /**
  * 导航到项目管理
