@@ -28,6 +28,9 @@ interface ProjectVersion {
   text_content: string
   parsed_data?: any
   xml_content?: string
+  mermaid_content?: string
+  excalidraw_content?: string
+  direction?: 'LR' | 'TB'
   status: string
   created_at: string
   updated_at: string
@@ -230,6 +233,23 @@ class TopologyApiClient {
     })
   }
 
+  // Mermaid 生成 API
+  generateMermaid = async (data: {
+    parsed_data: any,
+    options?: { direction?: 'LR' | 'TB' }
+  }): Promise<ApiResponse<{
+    mermaid_content: string
+    mermaid_length: number
+    stats?: any
+    direction: 'LR' | 'TB'
+  }>> => {
+    return await this.$fetch('/api/generate/mermaid', {
+      method: 'POST',
+      body: data
+    })
+  }
+
+
   // 系统状态 API
   status = async (): Promise<ApiResponse<{
     database: {
@@ -274,26 +294,28 @@ class TopologyApiClient {
 
   // 下载 XML 文件
   download = async (versionId: string): Promise<void> => {
+    return await this.downloadFormat(versionId, 'drawio')
+  }
+
+  // 下载指定格式文件
+  downloadFormat = async (versionId: string, format: 'drawio' | 'mermaid' | 'excalidraw'): Promise<void> => {
     try {
-      // 使用 fetch 获取文件内容
-      const response = await fetch(`/api/versions/${versionId}/download`)
+      const response = await fetch(`/api/versions/${versionId}/download?format=${format}`)
 
       if (!response.ok) {
         throw new Error(`下载失败: ${response.statusText}`)
       }
 
-      // 获取文件内容
       const blob = await response.blob()
 
-      // 创建下载链接
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.download = `topology-${versionId}.drawio`
+      const ext = format === 'drawio' ? 'drawio' : (format === 'mermaid' ? 'mmd' : 'excalidraw.json')
+      link.download = `topology-${versionId}.${ext}`
       document.body.appendChild(link)
       link.click()
 
-      // 清理
       link.remove()
       window.URL.revokeObjectURL(url)
     } catch (error) {
@@ -304,12 +326,12 @@ class TopologyApiClient {
 }
 
 export { TopologyApiClient }
-export type { 
-  Project, 
-  ProjectVersion, 
-  ProjectListResponse, 
-  VersionListResponse, 
+export type {
+  Project,
+  ProjectVersion,
+  ProjectListResponse,
+  VersionListResponse,
   PaginationParams,
-  ApiResponse 
+  ApiResponse
 }
 

@@ -11,7 +11,7 @@
         <p class="text-body-1 text-grey-darken-1 mt-4">加载项目中...</p>
       </div>
     </div>
-    
+
     <!-- 项目不存在 -->
     <div v-else-if="!project" class="text-center pa-12">
       <v-icon size="80" color="grey-lighten-1" class="mb-4">
@@ -30,7 +30,7 @@
         返回项目列表
       </v-btn>
     </div>
-    
+
     <!-- 编辑器界面 -->
     <div v-else class="editor-container">
       <!-- 顶部工具栏 -->
@@ -116,7 +116,7 @@
           </div>
         </div>
       </v-app-bar>
-      
+
       <!-- 主编辑区域 -->
       <div class="editor-content">
         <v-row no-gutters style="height: 100%;">
@@ -168,7 +168,7 @@
               />
             </div>
           </v-col>
-          
+
           <!-- 右侧：预览和结果 -->
           <v-col cols="12" lg="8" class="preview-panel">
             <div class="panel-header">
@@ -181,9 +181,11 @@
               <v-tab value="preview">拓扑生成</v-tab>
               <v-tab value="data">解析数据</v-tab>
               <v-tab value="xml">XML代码</v-tab>
+              <v-tab value="mermaid">Mermaid 预览</v-tab>
+
               <v-tab value="history">版本历史</v-tab>
             </v-tabs>
-            
+
             <v-tabs-window v-model="activeTab" class="preview-content">
               <!-- 拓扑预览 -->
               <v-tabs-window-item value="preview" class="preview-tab">
@@ -197,7 +199,7 @@
                   @download="downloadTopology"
                 />
               </v-tabs-window-item>
-              
+
               <!-- 解析数据 -->
               <v-tabs-window-item value="data" class="data-tab">
                 <ParsedDataViewer
@@ -205,13 +207,24 @@
                   :loading="processing"
                 />
               </v-tabs-window-item>
-              
+
               <!-- XML代码 -->
               <v-tabs-window-item value="xml" class="xml-tab">
                 <XmlCodeViewer
                   :xml-content="currentVersion?.xml_content"
                   :loading="processing"
                   @download="downloadTopology"
+                />
+              </v-tabs-window-item>
+
+              <!-- Mermaid 预览 -->
+              <v-tabs-window-item value="mermaid" class="preview-tab">
+                <MermaidPreview
+                  :parsed-data="currentVersion?.parsed_data"
+                  :version-id="currentVersion?.id"
+                  :stored-mermaid="currentVersion?.mermaid_content"
+                  :stored-direction="(currentVersion as any)?.direction"
+                  :loading="processing"
                 />
               </v-tabs-window-item>
 
@@ -232,7 +245,7 @@
         </v-row>
       </div>
     </div>
-    
+
     <!-- 格式帮助对话框 -->
     <FormatHelpDialog v-model="showFormatHelp" />
 
@@ -346,17 +359,17 @@ const loadProject = async () => {
   loading.value = true
   try {
     const { $topologyApi } = useNuxtApp()
-    
+
     // 加载项目基本信息
     const projectResponse = await $topologyApi.projects.getById(projectId.value)
     if (!projectResponse.data) throw new Error('项目数据加载失败')
     project.value = projectResponse.data
-    
+
     // 加载项目版本列表
     const versionsResponse = await $topologyApi.projects.getVersions(projectId.value)
     if (!versionsResponse.data?.versions) throw new Error('项目版本列表加载失败')
     versions.value = versionsResponse.data.versions
-    
+
     // 修复逻辑：优先选择正在处理中的版本，而不是最新版本
     if (versions.value.length > 0) {
       let targetVersion = null
@@ -405,14 +418,14 @@ const selectVersion = async (versionId: string) => {
 // 保存当前版本
 const saveCurrentVersion = async () => {
   if (!currentVersion.value) return
-  
+
   saving.value = true
   try {
     const { $topologyApi } = useNuxtApp()
     await $topologyApi.versions.update(currentVersion.value.id, {
       text_content: textContent.value
     })
-    
+
     // 重新加载版本数据
     await loadVersion(currentVersion.value.id)
   } catch (error) {
