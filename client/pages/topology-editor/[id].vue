@@ -183,6 +183,8 @@
               <v-tab value="xml">XML代码</v-tab>
               <v-tab value="mermaid">Mermaid 预览</v-tab>
 
+              <v-tab value="excalidraw">Excalidraw 预览</v-tab>
+
               <v-tab value="history">版本历史</v-tab>
             </v-tabs>
 
@@ -227,6 +229,18 @@
                   :loading="processing"
                 />
               </v-tabs-window-item>
+
+              <!-- Excalidraw 预览 -->
+              <v-tabs-window-item value="excalidraw" class="preview-tab">
+                <ExcalidrawPreview
+                  :parsed-data="currentVersion?.parsed_data"
+                  :version-id="currentVersion?.id"
+                  :stored-excalidraw="currentVersion?.excalidraw_content"
+                  :stored-direction="(currentVersion as any)?.direction"
+                  :loading="processing"
+                />
+              </v-tabs-window-item>
+
 
 
 

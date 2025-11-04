@@ -249,6 +249,23 @@ class TopologyApiClient {
     })
   }
 
+  // Excalidraw 生成 API
+  generateExcalidraw = async (data: {
+    parsed_data: any,
+    options?: { direction?: 'LR' | 'TB' }
+  }): Promise<ApiResponse<{
+    excalidraw_content: string
+    excalidraw_length: number
+    stats?: any
+    direction: 'LR' | 'TB'
+  }>> => {
+    return await this.$fetch('/api/generate/excalidraw', {
+      method: 'POST',
+      body: data
+    })
+  }
+
+
 
   // 系统状态 API
   status = async (): Promise<ApiResponse<{

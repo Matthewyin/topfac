@@ -18,11 +18,14 @@
     "docker:run": "docker run -p 30100:3000 work-counts-frontend"
   },
   "dependencies": {
+    "@excalidraw/excalidraw": "^0.18.0",
     "@mdi/font": "^7.4.47",
     "@nuxt/eslint": "^1.4.1",
     "axios": "^1.10.0",
     "mermaid": "^10.9.5",
     "nuxt": "^3.17.5",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
     "sass": "^1.89.2",
     "typescript": "^5.8.3",
     "vite-plugin-vuetify": "^2.0.4",
