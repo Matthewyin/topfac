@@ -83,37 +83,47 @@ versions.delete('/:id', async (c) => {
   }
 })
 
-// 下载版本 XML
+// 下载版本文件（支持 drawio|mermaid|excalidraw）
 versions.get('/:id/download', async (c) => {
   try {
     const versionId = c.req.param('id')
+    const format = (c.req.query('format') || 'drawio').toLowerCase()
     const version = await db.findById('project_versions', versionId)
 
     if (!version) {
-      return c.json({
-        success: false,
-        error: '版本不存在'
-      }, 404)
+      return c.json({ success: false, error: '版本不存在' }, 404)
     }
 
-    if (!version.xml_content) {
-      return c.json({
-        success: false,
-        error: 'XML内容不存在'
-      }, 404)
+    let content = ''
+    let filename = ''
+    let contentType = ''
+
+    if (format === 'drawio') {
+      content = version.xml_content
+      filename = `topology-${versionId}.drawio`
+      contentType = 'application/xml'
+    } else if (format === 'mermaid') {
+      content = version.mermaid_content
+      filename = `topology-${versionId}.mmd`
+      contentType = 'text/plain; charset=utf-8'
+    } else if (format === 'excalidraw') {
+      content = version.excalidraw_content
+      filename = `topology-${versionId}.excalidraw.json`
+      contentType = 'application/json; charset=utf-8'
+    } else {
+      return c.json({ success: false, error: '不支持的格式' }, 400)
     }
 
-    // 设置响应头
-    c.header('Content-Type', 'application/xml')
-    c.header('Content-Disposition', `attachment; filename="topology-${versionId}.drawio"`)
-    
-    return c.body(version.xml_content)
+    if (!content) {
+      return c.json({ success: false, error: '内容不存在' }, 404)
+    }
+
+    c.header('Content-Type', contentType)
+    c.header('Content-Disposition', `attachment; filename="${filename}"`)
+    return c.body(content)
   } catch (error) {
     console.error('Download version error:', error)
-    return c.json({
-      success: false,
-      error: '下载失败'
-    }, 500)
+    return c.json({ success: false, error: '下载失败' }, 500)
   }
 })
 

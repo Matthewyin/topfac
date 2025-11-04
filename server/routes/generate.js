@@ -1,6 +1,9 @@
 // XML生成路由
 import { Hono } from 'hono'
 import { DrawIOService } from '../services/DrawIOService.js'
+import MermaidService from '../services/MermaidService.js'
+import ExcalidrawService from '../services/ExcalidrawService.js'
+
 
 const generate = new Hono()
 
@@ -43,6 +46,69 @@ generate.post('/', async (c) => {
       success: false,
       error: `生成失败: ${error.message}`
     }, 500)
+  }
+})
+
+// 生成 Mermaid 文本
+generate.post('/mermaid', async (c) => {
+  try {
+    const data = await c.req.json()
+    if (!data || !data.parsed_data) {
+      return c.json({ success: false, error: '请求数据不能为空，需要 parsed_data 字段' }, 400)
+    }
+    const direction = (data.options?.direction || 'LR').toUpperCase()
+    const svc = new MermaidService()
+    const content = svc.generate(data.parsed_data, { direction })
+
+    return c.json({
+      success: true,
+      data: {
+        mermaid_content: content,
+        mermaid_length: content.length,
+        stats: {
+          nodes: data.parsed_data.components?.length || 0,
+          edges: data.parsed_data.connections?.length || 0,
+          environments: data.parsed_data.environments?.length || 0
+        },
+        direction
+      },
+      message: 'Mermaid 生成成功'
+    })
+  } catch (error) {
+    console.error('Mermaid 生成失败:', error)
+    return c.json({ success: false, error: `生成失败: ${error.message}` }, 500)
+  }
+})
+
+// 生成 Excalidraw JSON
+generate.post('/excalidraw', async (c) => {
+  try {
+    const data = await c.req.json()
+    if (!data || !data.parsed_data) {
+      return c.json({ success: false, error: '请求数据不能为空，需要 parsed_data 字段' }, 400)
+    }
+    const direction = (data.options?.direction || 'LR').toUpperCase()
+    const svc = new ExcalidrawService()
+    const obj = svc.generate(data.parsed_data, { direction })
+    const content = JSON.stringify(obj)
+
+    return c.json({
+      success: true,
+      data: {
+        excalidraw_content: content,
+        excalidraw_length: content.length,
+        stats: {
+          nodes: data.parsed_data.components?.length || 0,
+          edges: data.parsed_data.connections?.length || 0,
+          environments: data.parsed_data.environments?.length || 0
+        },
+        direction
+      },
+      message: 'Excalidraw 生成成功'
+    })
+  } catch (error) {
+    console.error('Excalidraw 生成失败:', error)
+    return c.json({ success: false, error: `生成失败: ${error.message}` }, 500)
   }
 })
 

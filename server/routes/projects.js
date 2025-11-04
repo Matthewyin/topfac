@@ -16,11 +16,11 @@ projects.get('/', async (c) => {
     if (status) filter.status = status
 
     const allProjects = await db.findAll('projects', filter)
-    
+
     // 简单搜索
     let filteredProjects = allProjects
     if (search) {
-      filteredProjects = allProjects.filter(project => 
+      filteredProjects = allProjects.filter(project =>
         project.project_name.toLowerCase().includes(search.toLowerCase()) ||
         (project.description && project.description.toLowerCase().includes(search.toLowerCase()))
       )
@@ -138,7 +138,7 @@ projects.put('/:id', async (c) => {
 projects.delete('/:id', async (c) => {
   try {
     const projectId = c.req.param('id')
-    
+
     // 软删除：更新状态为 deleted
     const project = await db.update('projects', projectId, {
       status: 'deleted'
@@ -258,6 +258,9 @@ projects.post('/:id/process', async (c) => {
     // 导入解析和生成服务
     const { default: TextParser } = await import('../services/TextParser.js')
     const { default: DrawIOService } = await import('../services/DrawIOService.js')
+    const { default: MermaidService } = await import('../services/MermaidService.js')
+    const { default: ExcalidrawService } = await import('../services/ExcalidrawService.js')
+
 
     // 步骤1: 解析文本
     const parser = new TextParser()
@@ -269,6 +272,15 @@ projects.post('/:id/process', async (c) => {
         error: '文本解析失败，未能识别有效的网络组件'
       }, 400)
     }
+
+
+    // 步骤2.1: 生成 Mermaid & Excalidraw
+    const direction = 'LR'
+    const mermaidService = new MermaidService()
+    const mermaidContent = mermaidService.generate(parsedData, { direction })
+    const excalidrawService = new ExcalidrawService()
+    const excalidrawObj = excalidrawService.generate(parsedData, { direction })
+    const excalidrawContent = JSON.stringify(excalidrawObj)
 
     // 步骤2: 生成DrawIO XML
     const drawioService = new DrawIOService()
@@ -285,6 +297,9 @@ projects.post('/:id/process', async (c) => {
       text_content: text_content,
       parsed_data: JSON.stringify(parsedData),
       xml_content: xmlContent,
+      mermaid_content: mermaidContent,
+      excalidraw_content: excalidrawContent,
+      direction,
       status: 'active'
     })
 
@@ -301,7 +316,12 @@ projects.post('/:id/process', async (c) => {
         version: newVersion,
         parsed_data: parsedData,
         xml_generated: true,
-        xml_length: xmlContent.length
+        xml_length: xmlContent.length,
+        mermaid_generated: true,
+        mermaid_length: mermaidContent.length,
+        excalidraw_generated: true,
+        excalidraw_length: excalidrawContent.length,
+        direction
       }
     })
   } catch (error) {

@@ -1,6 +1,8 @@
 // DrawIO XML 生成器类
 // 负责将解析后的拓扑数据生成为DrawIO格式的XML
 
+import LayoutService from './LayoutService.js'
+
 export class DrawIOService {
   constructor() {
     // 节点样式配置
@@ -81,9 +83,9 @@ export class DrawIOService {
       return this.generateEmptyXML();
     }
 
-    // 计算布局
-    const layout = this.calculateLayout(components, connections, environments);
-    
+    // 计算布局（统一使用 LayoutService）
+    const layout = new LayoutService().calculate(parsedData, { direction: 'LR' });
+
     // 生成XML内容
     const cells = [];
     let cellId = 0;
@@ -98,14 +100,14 @@ export class DrawIOService {
     for (const env of environments) {
       const envId = `env_${cellId++}`;
       const envPos = layout.environments[env.name];
-      
+
       if (envPos) {
         cells.push(this.generateGroupCell(
-          envId, 
-          env.name, 
-          envPos.x, 
-          envPos.y, 
-          envPos.width, 
+          envId,
+          env.name,
+          envPos.x,
+          envPos.y,
+          envPos.width,
           envPos.height,
           '#E3F2FD'
         ));
@@ -114,14 +116,14 @@ export class DrawIOService {
         for (const dc of env.datacenters) {
           const dcId = `dc_${cellId++}`;
           const dcPos = layout.datacenters[`${env.name}-${dc.name}`];
-          
+
           if (dcPos) {
             cells.push(this.generateGroupCell(
-              dcId, 
-              dc.name, 
-              dcPos.x, 
-              dcPos.y, 
-              dcPos.width, 
+              dcId,
+              dc.name,
+              dcPos.x,
+              dcPos.y,
+              dcPos.width,
               dcPos.height,
               '#F3E5F5',
               envId
@@ -131,14 +133,14 @@ export class DrawIOService {
             for (const area of dc.areas) {
               const areaId = `area_${cellId++}`;
               const areaPos = layout.areas[`${env.name}-${dc.name}-${area.name}`];
-              
+
               if (areaPos) {
                 cells.push(this.generateGroupCell(
-                  areaId, 
-                  area.name, 
-                  areaPos.x, 
-                  areaPos.y, 
-                  areaPos.width, 
+                  areaId,
+                  area.name,
+                  areaPos.x,
+                  areaPos.y,
+                  areaPos.width,
                   areaPos.height,
                   '#E8F5E8',
                   dcId
@@ -396,7 +398,7 @@ export class DrawIOService {
   generateComponentCell(id, component, x, y, width, height, parent) {
     const style = this.nodeStyles[component.type] || this.nodeStyles.unknown;
     const styleStr = `shape=${style.shape};fillColor=${style.fillColor};strokeColor=${style.strokeColor};strokeWidth=${style.strokeWidth};fontColor=${style.fontColor};fontSize=${style.fontSize};fontStyle=${style.fontStyle};whiteSpace=wrap;html=1;`;
-    
+
     return `<mxCell id="${id}" value="${this.escapeXML(component.name)}" style="${styleStr}" vertex="1" parent="${parent}">
           <mxGeometry x="${x}" y="${y}" width="${width}" height="${height}" as="geometry"/>
         </mxCell>`;
@@ -407,7 +409,7 @@ export class DrawIOService {
    */
   generateConnectionCell(id, connection, sourceId, targetId) {
     const styleStr = `edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=${this.edgeStyle.strokeColor};strokeWidth=${this.edgeStyle.strokeWidth};fontColor=${this.edgeStyle.fontColor};fontSize=${this.edgeStyle.fontSize};`;
-    
+
     return `<mxCell id="${id}" value="${this.escapeXML(connection.description || '')}" style="${styleStr}" edge="1" parent="1" source="${sourceId}" target="${targetId}">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>`;

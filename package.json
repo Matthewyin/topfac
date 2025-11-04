@@ -26,7 +26,8 @@
     "deploy": "./scripts/deploy.sh",
     "lint": "cd client && npm run lint",
     "lint:fix": "cd client && npm run lint:fix",
-    "test": "npm run test:api"
+    "test": "npm run test:api",
+    "test:unit": "vitest run"
   },
   "keywords": [
     "topology",
