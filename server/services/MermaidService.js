@@ -35,7 +35,10 @@ export class MermaidService {
 
       // 定义 datacenters、areas、components
       for (const dc of env.datacenters) {
+        const dcFullPath = `${env.name}/${dc.name}`
         lines.push(`  subgraph ${this.escape(dc.name)}`)
+
+        // 定义 areas 和 components
         for (const area of dc.areas) {
           lines.push(`    subgraph ${this.escape(area.name)}`)
           for (const comp of area.components) {
@@ -45,27 +48,36 @@ export class MermaidService {
           }
           lines.push('    end')
         }
-        lines.push('  end')
-      }
 
-      // 定义该 environment 内部的连接
-      for (const conn of connections) {
-        const srcComp = components.find(c => c.id === conn.source_id)
-        const dstComp = components.find(c => c.id === conn.target_id)
-        if (srcComp?.environment === env.name && dstComp?.environment === env.name) {
-          const label = conn.description ? `|${this.escape(conn.description)}|` : ''
-          lines.push(`  ${conn.source_id} -->${label} ${conn.target_id}`)
+        // 定义该 datacenter 内部的连接
+        for (const conn of connections) {
+          const srcComp = components.find(c => c.id === conn.source_id)
+          const dstComp = components.find(c => c.id === conn.target_id)
+          const srcPath = srcComp ? `${srcComp.environment}/${srcComp.datacenter}` : null
+          const dstPath = dstComp ? `${dstComp.environment}/${dstComp.datacenter}` : null
+
+          // 只定义同一 datacenter 内的连接
+          if (srcPath === dcFullPath && dstPath === dcFullPath) {
+            const label = conn.description ? `|${this.escape(conn.description)}|` : ''
+            lines.push(`    ${conn.source_id} -->${label} ${conn.target_id}`)
+          }
         }
+
+        lines.push('  end')
       }
 
       lines.push('end')
     }
 
-    // 定义跨 environment 的连接
+    // 定义跨 datacenter 或跨 environment 的连接
     for (const conn of connections) {
       const srcComp = components.find(c => c.id === conn.source_id)
       const dstComp = components.find(c => c.id === conn.target_id)
-      if (srcComp?.environment !== dstComp?.environment) {
+      const srcPath = srcComp ? `${srcComp.environment}/${srcComp.datacenter}` : null
+      const dstPath = dstComp ? `${dstComp.environment}/${dstComp.datacenter}` : null
+
+      // 跨 datacenter 或跨 environment 的连接
+      if (srcPath !== dstPath) {
         const label = conn.description ? `|${this.escape(conn.description)}|` : ''
         lines.push(`${conn.source_id} -->${label} ${conn.target_id}`)
       }
