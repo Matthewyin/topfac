@@ -43,8 +43,8 @@
       </div>
 
       <ClientOnly>
-        <div v-show="!error" ref="mountEl" class="viewer-container"></div>
-        <div v-if="!error && !excalidrawText" class="center text-grey">暂无可预览内容</div>
+        <div v-show="!error && !loadingLocal && !loading" ref="mountEl" class="viewer-container"></div>
+        <div v-if="!error && !loadingLocal && !loading && !excalidrawText" class="center text-grey">暂无可预览内容</div>
       </ClientOnly>
     </div>
   </div>
@@ -77,6 +77,18 @@ let reactRoot: any = null
 let React: any = null
 let createRoot: any = null
 let ExcalidrawComp: any = null
+
+// 初始化与去抖
+const isInitializing = ref(true)
+let debounceTimer: any = null
+const debouncedGenerate = () => {
+  if (debounceTimer) clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(() => {
+    if (!loadingLocal.value) {
+      generateAndRender()
+    }
+  }, 200)
+}
 
 const ensureLibs = async () => {
   if (!React) {
@@ -202,15 +214,19 @@ onMounted(async () => {
     }
   } catch (e: any) {
     error.value = e?.message || String(e)
+  } finally {
+    isInitializing.value = false
   }
 })
 
 watch(() => props.parsedData, async (val) => {
-  if (val) await generateAndRender()
+  if (isInitializing.value) return
+  if (val) debouncedGenerate()
 })
 
 watch(direction, async () => {
-  await generateAndRender()
+  if (isInitializing.value) return
+  debouncedGenerate()
 })
 
 onBeforeUnmount(() => {
