@@ -61,8 +61,7 @@ export class MermaidService {
 
           // 只定义同一 datacenter 内的连接
           if (srcPath === dcFullPath && dstPath === dcFullPath) {
-            const label = conn.description ? `|${this.escape(conn.description)}|` : ''
-            lines.push(`    ${conn.source_id} -->${label} ${conn.target_id}`)
+            lines.push(`    ${conn.source_id} --> ${conn.target_id}`)
           }
         }
 
@@ -81,8 +80,7 @@ export class MermaidService {
 
       // 跨 datacenter 或跨 environment 的连接
       if (srcPath !== dstPath) {
-        const label = conn.description ? `|${this.escape(conn.description)}|` : ''
-        lines.push(`${conn.source_id} -->${label} ${conn.target_id}`)
+        lines.push(`${conn.source_id} --> ${conn.target_id}`)
       }
     }
 

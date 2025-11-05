@@ -410,7 +410,7 @@ export class DrawIOService {
   generateConnectionCell(id, connection, sourceId, targetId) {
     const styleStr = `edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=${this.edgeStyle.strokeColor};strokeWidth=${this.edgeStyle.strokeWidth};fontColor=${this.edgeStyle.fontColor};fontSize=${this.edgeStyle.fontSize};`;
 
-    return `<mxCell id="${id}" value="${this.escapeXML(connection.description || '')}" style="${styleStr}" edge="1" parent="1" source="${sourceId}" target="${targetId}">
+    return `<mxCell id="${id}" value="" style="${styleStr}" edge="1" parent="1" source="${sourceId}" target="${targetId}">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>`;
   }
