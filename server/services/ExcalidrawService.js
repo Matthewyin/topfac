@@ -173,10 +173,10 @@ export class ExcalidrawService {
 
       if (!srcPos || !dstPos) continue
 
-      // 计算箭头起点和终点
-      const startX = srcPos.x + srcPos.width  // 从源组件右侧开始
+      // 计算箭头起点和终点（使用容器中心，让 binding 自动吸附到边缘）
+      const startX = srcPos.x + srcPos.width / 2
       const startY = srcPos.y + srcPos.height / 2
-      const endX = dstPos.x  // 到目标组件左侧
+      const endX = dstPos.x + dstPos.width / 2
       const endY = dstPos.y + dstPos.height / 2
 
       elements.push(arrow({
