@@ -22,7 +22,7 @@ function textEl({ id, x, y, text, width = 160, height = 24, containerId = null }
     id: id || rid('text'), type: 'text', x, y, width, height, angle: 0,
     strokeColor: '#1e1e1e', backgroundColor: 'transparent', fillStyle: 'solid', strokeWidth: 1, strokeStyle: 'solid', roughness: 1, opacity: 100,
     groupIds: [], seed: rnd(), version: 1, versionNonce: rnd(), isDeleted: false, boundElements: [], updated: now(), link: null, locked: false,
-    text: String(text), fontSize: 16, fontFamily: 1, textAlign: 'center', verticalAlign: 'middle', baseline: 18, containerId, originalText: String(text), lineHeight: 1.2
+    text: String(text), fontSize: 16, fontFamily: 1, textAlign: 'center', verticalAlign: 'top', baseline: 18, containerId, originalText: String(text), lineHeight: 1.2
   }
 }
 
@@ -52,6 +52,7 @@ export class ExcalidrawService {
     const envs = parsedData.environments || []
     const componentIdToRectId = {}  // 组件 ID → rectangle element ID 的映射
     const componentAbsPos = {}  // 组件 ID → 绝对坐标的映射
+    const rectElements = {}  // rectangle element ID → element 对象的映射
 
     // 环境容器
     for (const env of envs) {
@@ -60,7 +61,7 @@ export class ExcalidrawService {
 
       const envRectId = rid('rect')
       const envTextId = rid('text')
-      elements.push(rect({
+      const envRectEl = rect({
         id: envRectId,
         x: epos.x,
         y: epos.y,
@@ -68,11 +69,13 @@ export class ExcalidrawService {
         height: epos.height,
         strokeColor: '#90CAF9',
         boundElements: [{ id: envTextId, type: 'text' }]
-      }))
+      })
+      rectElements[envRectId] = envRectEl
+      elements.push(envRectEl)
       elements.push(textEl({
         id: envTextId,
         x: epos.x + epos.width / 2,
-        y: epos.y + 12,
+        y: epos.y + 8,
         text: env.name,
         containerId: envRectId
       }))
@@ -85,7 +88,7 @@ export class ExcalidrawService {
 
         const dcRectId = rid('rect')
         const dcTextId = rid('text')
-        elements.push(rect({
+        const dcRectEl = rect({
           id: dcRectId,
           x: dcAbs.x,
           y: dcAbs.y,
@@ -93,11 +96,13 @@ export class ExcalidrawService {
           height: dcAbs.height,
           strokeColor: '#E1BEE7',
           boundElements: [{ id: dcTextId, type: 'text' }]
-        }))
+        })
+        rectElements[dcRectId] = dcRectEl
+        elements.push(dcRectEl)
         elements.push(textEl({
           id: dcTextId,
           x: dcAbs.x + dcAbs.width / 2,
-          y: dcAbs.y + 12,
+          y: dcAbs.y + 8,
           text: dc.name,
           containerId: dcRectId
         }))
@@ -110,7 +115,7 @@ export class ExcalidrawService {
 
           const areaRectId = rid('rect')
           const areaTextId = rid('text')
-          elements.push(rect({
+          const areaRectEl = rect({
             id: areaRectId,
             x: areaAbs.x,
             y: areaAbs.y,
@@ -118,11 +123,13 @@ export class ExcalidrawService {
             height: areaAbs.height,
             strokeColor: '#A5D6A7',
             boundElements: [{ id: areaTextId, type: 'text' }]
-          }))
+          })
+          rectElements[areaRectId] = areaRectEl
+          elements.push(areaRectEl)
           elements.push(textEl({
             id: areaTextId,
             x: areaAbs.x + areaAbs.width / 2,
-            y: areaAbs.y + 12,
+            y: areaAbs.y + 8,
             text: area.name,
             containerId: areaRectId
           }))
@@ -139,7 +146,7 @@ export class ExcalidrawService {
             componentIdToRectId[comp.id] = compRectId  // 记录映射
             componentAbsPos[comp.id] = compAbs  // 记录绝对坐标
 
-            elements.push(rect({
+            const compRectEl = rect({
               id: compRectId,
               x: compAbs.x,
               y: compAbs.y,
@@ -147,11 +154,13 @@ export class ExcalidrawService {
               height: compAbs.height,
               strokeColor: this.typeStroke[comp.type] || this.typeStroke.unknown,
               boundElements: [{ id: compTextId, type: 'text' }]
-            }))
+            })
+            rectElements[compRectId] = compRectEl
+            elements.push(compRectEl)
             elements.push(textEl({
               id: compTextId,
               x: compAbs.x + compAbs.width / 2,
-              y: compAbs.y + compAbs.height / 2,
+              y: compAbs.y + 8,
               text: comp.name,
               containerId: compRectId
             }))
@@ -179,7 +188,7 @@ export class ExcalidrawService {
       const endX = dstPos.x + dstPos.width / 2
       const endY = dstPos.y + dstPos.height / 2
 
-      elements.push(arrow({
+      const arrowEl = arrow({
         x: startX,
         y: startY,
         width: endX - startX,
@@ -194,7 +203,17 @@ export class ExcalidrawService {
           focus: 0,
           gap: 1
         }
-      }))
+      })
+
+      elements.push(arrowEl)
+
+      // 更新源容器和目标容器的 boundElements，添加箭头引用（实现双向绑定）
+      if (rectElements[srcRectId]) {
+        rectElements[srcRectId].boundElements.push({ id: arrowEl.id, type: 'arrow' })
+      }
+      if (rectElements[dstRectId]) {
+        rectElements[dstRectId].boundElements.push({ id: arrowEl.id, type: 'arrow' })
+      }
     }
 
     const content = {
