@@ -31,16 +31,19 @@ export class MermaidService {
 
     // 环境容器
     for (const env of envs) {
-      lines.push(`subgraph ${this.escape(env.name)}`)
+      const envId = this.generateId(env.name)
+      lines.push(`subgraph ${envId}["${this.escape(env.name)}"]`)
 
       // 定义 datacenters、areas、components
       for (const dc of env.datacenters) {
         const dcFullPath = `${env.name}/${dc.name}`
-        lines.push(`  subgraph ${this.escape(dc.name)}`)
+        const dcId = this.generateId(`${env.name}_${dc.name}`)
+        lines.push(`  subgraph ${dcId}["${this.escape(dc.name)}"]`)
 
         // 定义 areas 和 components
         for (const area of dc.areas) {
-          lines.push(`    subgraph ${this.escape(area.name)}`)
+          const areaId = this.generateId(`${env.name}_${dc.name}_${area.name}`)
+          lines.push(`    subgraph ${areaId}["${this.escape(area.name)}"]`)
           for (const comp of area.components) {
             const cls = this.typeToClass[comp.type] || 'unknown'
             const nodeId = comp.id
@@ -85,6 +88,13 @@ export class MermaidService {
 
     const content = lines.join('\n')
     return content
+  }
+
+  // 生成唯一的 subgraph ID (移除特殊字符,避免 Mermaid 解析错误)
+  generateId(name) {
+    if (!name) return 'sg_unknown'
+    // 移除所有非字母数字字符,替换为下划线
+    return 'sg_' + String(name).replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_')
   }
 
   escape(str) {
