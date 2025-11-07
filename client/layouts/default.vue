@@ -11,13 +11,13 @@
         @click="drawer = !drawer"
         class="d-md-none"
       />
-      
+
       <v-toolbar-title class="text-h6 font-weight-medium text-grey-darken-2">
         智能网络拓扑生成系统
       </v-toolbar-title>
-      
+
       <v-spacer />
-      
+
       <!-- 右侧操作按钮 -->
       <v-btn
         icon="mdi-github"
@@ -71,6 +71,14 @@
           value="excel-merge"
           :to="'/excel-merge'"
         />
+
+        <v-list-item
+          prepend-icon="mdi-harddisk"
+          title="RAID 容量计算"
+          value="raid-calculator"
+          :to="'/raid-calculator'"
+        />
+
       </v-list>
     </v-navigation-drawer>
 
@@ -112,16 +120,16 @@ const mobile = computed(() => {
 // 组件挂载后设置抽屉状态
 onMounted(() => {
   drawer.value = !mobile.value
-  
+
   // 监听窗口大小变化
   const handleResize = () => {
     if (window.innerWidth >= 960) {
       drawer.value = true
     }
   }
-  
+
   window.addEventListener('resize', handleResize)
-  
+
   // 清理监听器
   onUnmounted(() => {
     window.removeEventListener('resize', handleResize)
@@ -160,4 +168,4 @@ onMounted(() => {
   margin-top: 8px !important;
   margin-bottom: 4px !important;
 }
-</style> 
+</style>
