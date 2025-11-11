@@ -309,7 +309,7 @@ ai.post('/convert-text', async (c) => {
     const { provider, api_key, natural_input, model_name } = data
 
     // 生成会话ID用于关联输入和输出日志
-    const sessionId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    const sessionId = `${Date.now()}_${Math.random().toString(36).slice(2, 11)}`
 
     console.log('开始AI文本转换:', {
       provider,
