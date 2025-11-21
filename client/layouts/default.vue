@@ -79,6 +79,20 @@
           :to="'/raid-calculator'"
         />
 
+        <v-divider class="my-2" />
+
+        <!-- AI 学习 -->
+        <v-list-subheader class="text-grey-darken-1 font-weight-medium">
+          AI 学习
+        </v-list-subheader>
+
+        <v-list-item
+          prepend-icon="mdi-chart-timeline-variant"
+          title="AI 架构时序模拟器"
+          value="ai-learning-aiflow"
+          :to="'/ai-learning/aiflow'"
+        />
+
       </v-list>
     </v-navigation-drawer>
 

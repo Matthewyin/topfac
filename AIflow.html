@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 架构时序模拟器</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0f172a; color: #e2e8f0; font-family: 'Segoe UI', monospace; }
+        
+        /* 代码面板滚动条 */
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #1e293b; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+
+        /* SVG 动画定义 */
+        @keyframes drawLine {
+            to { stroke-dashoffset: 0; }
+        }
+        @keyframes fadeArrow {
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // === 1. 定义实体 (泳道) ===
+        // TOOLS 实体定义保持不变
+        const ENTITIES = {
+            USER: { id: 'USER', name: 'User', icon: '👤', color: 'text-gray-300', bg: 'bg-gray-800' },
+            HOST: { id: 'HOST', name: 'Host/Env', icon: '💻', color: 'text-blue-400', bg: 'bg-blue-900/30' },
+            AGENT: { id: 'AGENT', name: 'Agent Logic', icon: '🤖', color: 'text-purple-400', bg: 'bg-purple-900/30' },
+            LLM: { id: 'LLM', name: 'LLM API', icon: '🧠', color: 'text-green-400', bg: 'bg-green-900/30' },
+            MCP: { id: 'MCP', name: 'MCP Server', icon: '🧰', color: 'text-orange-400', bg: 'bg-orange-900/30' },
+            TOOLS: { id: 'TOOLS', name: 'Actual Tool', icon: '🔨', color: 'text-red-400', bg: 'bg-red-900/30' }
+        };
+
+        // === SVG 箭头组件 ===
+        const Arrow = ({ widthPercent, isLeftToRight, label, isCurrent, index }) => {
+            const color = isCurrent ? '#fbbf24' : '#e2e8f0'; 
+            const labelBg = isCurrent 
+                ? 'bg-slate-900/90 text-yellow-200 border-yellow-500/50' 
+                : 'bg-slate-800/80 text-white border-slate-600';
+            
+            return (
+                <div className="absolute w-full h-12 flex items-center justify-center" style={{ zIndex: 10 }}>
+                    <div style={{ width: `${widthPercent}%`, position: 'relative', height: '100%' }}>
+                        <svg width="100%" height="100%" style={{ overflow: 'visible' }}>
+                            <defs>
+                                <marker id={`arrowhead-${index}`} markerWidth="10" markerHeight="7" 
+                                refX="9" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill={color} 
+                                    style={{ 
+                                        opacity: isCurrent ? 0 : 1, 
+                                        animation: isCurrent ? 'fadeArrow 0.1s linear 0.6s forwards' : 'none' 
+                                    }} 
+                                />
+                                </marker>
+                            </defs>
+                            <line 
+                                x1={isLeftToRight ? "0" : "100%"} 
+                                y1="50%" 
+                                x2={isLeftToRight ? "100%" : "0"} 
+                                y2="50%" 
+                                stroke={color} 
+                                strokeWidth="2" 
+                                markerEnd={`url(#arrowhead-${index})`}
+                                pathLength="1"
+                                strokeDasharray={isCurrent ? "1" : "none"}
+                                strokeDashoffset={isCurrent ? "1" : "0"}
+                                style={{ 
+                                    animation: isCurrent ? 'drawLine 0.6s ease-out forwards' : 'none' 
+                                }}
+                            />
+                        </svg>
+                        <div className={`absolute top-0 w-full text-center text-xs md:text-sm font-bold font-mono px-2 py-1 rounded border transition-colors duration-500 ${labelBg}`}
+                             style={{ 
+                                 transform: 'translateY(-50%)',
+                                 opacity: isCurrent ? 0 : 1,
+                                 animation: isCurrent ? 'fadeArrow 0.3s ease-out forwards' : 'none'
+                             }}>
+                            {label}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // === 主组件 ===
+        const App = () => {
+            const [config, setConfig] = useState({ agent: false, fc: false, mcp: false });
+            const [sequence, setSequence] = useState([]);
+            const [currentStepIndex, setCurrentStepIndex] = useState(-1);
+            const [isPlaying, setIsPlaying] = useState(false);
+            const [errorMsg, setErrorMsg] = useState(null);
+            const [activeLifelines, setActiveLifelines] = useState(['USER', 'HOST', 'LLM']);
+            
+            const scrollRef = useRef(null);
+
+            // === 优化滚动逻辑 ===
+            useEffect(() => {
+                if (scrollRef.current && isPlaying) {
+                    scrollRef.current.scrollTo({
+                        top: scrollRef.current.scrollHeight,
+                        behavior: 'smooth'
+                    });
+                }
+            }, [currentStepIndex, isPlaying]);
+
+            const generateSequence = (cfg) => {
+                const seq = [];
+                seq.push({ from: 'USER', to: 'HOST', label: '提问: "查询销量"', data: { input: "查询 2023 年 Q3 销量" } });
+
+                if (!cfg.agent && !cfg.fc && !cfg.mcp) {
+                    // 1. Basic Chat
+                    seq.push({ from: 'HOST', to: 'LLM', label: '发送 Prompt', data: { messages: [{role: "user", content: "查询销量"}] } });
+                    seq.push({ from: 'LLM', to: 'HOST', label: '回复文本', data: { content: "抱歉，我无法访问数据库。" } });
+                    seq.push({ from: 'HOST', to: 'USER', label: '显示结果', data: { output: "抱歉，我无法访问数据库。" } });
+                
+                } else if (!cfg.agent && cfg.fc && !cfg.mcp) {
+                    // 2. Scripted Function Calling (Host -> Tools -> Host)
+                    seq.push({ from: 'HOST', to: 'LLM', label: '发送 Prompt + Tools', data: { messages: [{role: "user", content: "查询..."}], tools: [{name: "query_db"}] } });
+                    seq.push({ from: 'LLM', to: 'HOST', label: '请求调用函数', data: { tool_calls: [{ name: "query_db", args: "{'year':2023}" }] } });
+                    
+                    seq.push({ from: 'HOST', to: 'TOOLS', label: '执行本地函数', data: { exec: "query_db(2023)" } });
+                    seq.push({ from: 'TOOLS', to: 'HOST', label: '函数返回数据', data: { return: 1000000 } });
+
+                    seq.push({ from: 'HOST', to: 'LLM', label: '提交函数结果', data: { role: "tool", content: "100万" } });
+                    seq.push({ from: 'LLM', to: 'HOST', label: '最终回复', data: { content: "销量是 100 万。" } });
+                    seq.push({ from: 'HOST', to: 'USER', label: '显示结果', data: { output: "销量是 100 万。" } });
+                
+                } else if (cfg.agent && cfg.fc && !cfg.mcp) {
+                    // 3. Agent Loop (Agent -> Host -> Tools -> Host -> Agent)
+                    seq.push({ from: 'HOST', to: 'AGENT', label: '激活智能体', data: { task: "Analyze Sales" } });
+                    seq.push({ from: 'AGENT', to: 'LLM', label: '思考 (ReAct)', data: { system: "You are an agent...", messages: [{role: "user", content: "Analyze..."}] } });
+                    seq.push({ from: 'LLM', to: 'AGENT', label: '决策: 调用工具', data: { tool_calls: [{ name: "search_file" }] } });
+                    
+                    // Agent 请求 Host 环境执行工具
+                    seq.push({ from: 'AGENT', to: 'HOST', label: '请求环境执行', data: { cmd: "run search_file" } });
+                    seq.push({ from: 'HOST', to: 'TOOLS', label: '系统调用 grep', data: { exec: "grep 'sales' data.csv" } });
+                    seq.push({ from: 'TOOLS', to: 'HOST', label: 'IO 输出', data: { stdout: "sales_q3 = 1M" } });
+                    seq.push({ from: 'HOST', to: 'AGENT', label: '返回执行结果', data: { result: "Found: sales_q3 = 1M" } });
+
+                    seq.push({ from: 'AGENT', to: 'LLM', label: '观察 (Observation)', data: { role: "tool", content: "sales_q3 = 1M" } });
+                    seq.push({ from: 'LLM', to: 'AGENT', label: '生成结论', data: { content: "Analysis complete: 1M" } });
+                    seq.push({ from: 'AGENT', to: 'HOST', label: '返回任务结果', data: { final_answer: "1M" } });
+                    seq.push({ from: 'HOST', to: 'USER', label: '显示结果', data: { output: "1M" } });
+                
+                } else if (cfg.agent && cfg.fc && cfg.mcp) {
+                    // 4. Full MCP (Agent -> MCP -> Tools -> MCP -> Agent)
+                    seq.push({ from: 'HOST', to: 'AGENT', label: '启动任务', data: { task: "Read Excel via MCP" } });
+                    seq.push({ from: 'AGENT', to: 'LLM', label: '思考', data: { messages: [{role: "user", content: "Read Excel..."}] } });
+                    seq.push({ from: 'LLM', to: 'AGENT', label: '决策: Call mcp_tool', data: { tool_calls: [{ name: "mcp_excel_read" }] } });
+                    
+                    seq.push({ from: 'AGENT', to: 'MCP', label: 'MCP 协议请求', data: { jsonrpc: "2.0", method: "tools/call", params: { name: "read_sheet" } } });
+                    
+                    seq.push({ from: 'MCP', to: 'TOOLS', label: '驱动底层工具', data: { internal_call: "pandas.read_excel()" } });
+                    seq.push({ from: 'TOOLS', to: 'MCP', label: '工具返回', data: { raw_data: "rows..." } });
+
+                    seq.push({ from: 'MCP', to: 'AGENT', label: 'MCP 协议响应', data: { jsonrpc: "2.0", result: { content: [{type:"text", text:"Values..."}] } } });
+                    seq.push({ from: 'AGENT', to: 'LLM', label: '提交 MCP 结果', data: { role: "tool", content: "Values..." } });
+                    seq.push({ from: 'LLM', to: 'AGENT', label: '生成回答', data: { content: "Excel shows..." } });
+                    seq.push({ from: 'AGENT', to: 'HOST', label: '完成', data: { final: "Done" } });
+                    seq.push({ from: 'HOST', to: 'USER', label: '显示结果', data: { output: "Done" } });
+                
+                } else {
+                    return null;
+                }
+                return seq;
+            };
+
+            const validateAndStart = () => {
+                let error = null;
+                if (config.mcp && !config.fc) error = "组合无效: MCP 必须依赖 Function Calling。";
+                else if (config.mcp && !config.agent) error = "组合无效 (演示限制): 此演示中 MCP 需挂载于 Agent。";
+                else if (config.agent && !config.fc) error = "组合不存在: Agent 需要 Function Calling 才能行动。";
+
+                if (error) {
+                    setErrorMsg(error);
+                    setIsPlaying(false);
+                    setSequence([]);
+                    return;
+                }
+
+                setErrorMsg(null);
+                const seq = generateSequence(config);
+                setSequence(seq);
+                setCurrentStepIndex(-1);
+                setIsPlaying(true);
+
+                // === 优化关键点：重排泳道顺序 ===
+                // 遵循 "通信亲密度" 原则：User -> Host -> Agent -> LLM -> MCP -> Tools
+                // 这样 Host 和 Agent 相邻，Agent 和 LLM 相邻，减少跨线。
+                const MASTER_ORDER = ['USER', 'HOST', 'AGENT', 'LLM', 'MCP', 'TOOLS'];
+                
+                const activeSet = new Set(['USER', 'HOST', 'LLM']);
+                if (config.agent) activeSet.add('AGENT');
+                if (config.mcp) activeSet.add('MCP');
+                if (config.fc) activeSet.add('TOOLS');
+                
+                // 按照 MASTER_ORDER 的顺序过滤出当前激活的泳道
+                const active = MASTER_ORDER.filter(id => activeSet.has(id));
+                
+                setActiveLifelines(active);
+            };
+
+            useEffect(() => {
+                if (isPlaying && sequence.length > 0) {
+                    if (currentStepIndex < sequence.length - 1) {
+                        const timer = setTimeout(() => {
+                            setCurrentStepIndex(prev => prev + 1);
+                        }, 1200); 
+                        return () => clearTimeout(timer);
+                    } else {
+                        setTimeout(() => setIsPlaying(false), 1000);
+                    }
+                }
+            }, [isPlaying, currentStepIndex, sequence]);
+
+            const getLifelinePosition = (id) => {
+                const active = activeLifelines;
+                const index = active.indexOf(id);
+                if (index === -1) return -1;
+                return (index + 0.5) * (100 / active.length);
+            };
+
+            // 计算动态高度
+            const containerHeight = `${(currentStepIndex + 5) * 100}px`;
+
+            return (
+                <div className="h-screen flex flex-col overflow-hidden bg-slate-900">
+                    {/* Header */}
+                    <div className="bg-slate-950 border-b border-slate-800 p-4 z-20 shadow-lg shrink-0">
+                        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+                            <div>
+                                <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+                                    <span className="text-3xl">⚡</span> AI 架构时序模拟器
+                                </h1>
+                            </div>
+                            
+                            <div className="flex items-center gap-4 bg-slate-900 px-5 py-3 rounded-lg border border-slate-800">
+                                <div className="flex gap-3 text-sm text-slate-400 border-r border-slate-700 pr-3 font-semibold">
+                                    <label className="flex items-center gap-2 cursor-not-allowed opacity-50"><input type="checkbox" checked disabled className="w-4 h-4 accent-blue-500"/> Host</label>
+                                    <label className="flex items-center gap-2 cursor-not-allowed opacity-50"><input type="checkbox" checked disabled className="w-4 h-4 accent-green-500"/> LLM</label>
+                                </div>
+                                <div className="flex gap-4 text-base font-bold text-white">
+                                    <label className="flex items-center gap-2 cursor-pointer hover:text-purple-300"><input type="checkbox" checked={config.agent} onChange={e => setConfig({...config, agent: e.target.checked})} className="w-4 h-4 accent-purple-500"/> Agent</label>
+                                    <label className="flex items-center gap-2 cursor-pointer hover:text-yellow-300"><input type="checkbox" checked={config.fc} onChange={e => setConfig({...config, fc: e.target.checked})} className="w-4 h-4 accent-yellow-500"/> Func Call</label>
+                                    <label className="flex items-center gap-2 cursor-pointer hover:text-orange-300"><input type="checkbox" checked={config.mcp} onChange={e => setConfig({...config, mcp: e.target.checked})} className="w-4 h-4 accent-orange-500"/> MCP</label>
+                                </div>
+                                <button onClick={validateAndStart} disabled={isPlaying} className={`ml-4 px-5 py-2 rounded-lg font-bold text-base ${isPlaying ? 'bg-slate-700 text-slate-400' : 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg hover:scale-105 transition-transform'}`}>
+                                    {isPlaying ? '运行中...' : '▶ 运行'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {errorMsg && <div className="bg-red-900/50 text-red-200 p-2 text-center text-sm font-bold">{errorMsg}</div>}
+
+                    {/* Content Area */}
+                    <div className="flex-1 flex overflow-hidden">
+                        
+                        {/* Left: Diagram (Scrollable) */}
+                        <div className="flex-1 relative bg-slate-900 overflow-y-auto custom-scroll" ref={scrollRef}>
+                            <div className="relative pb-20 transition-all duration-500 ease-out" style={{ height: containerHeight, minHeight: '100%' }}>
+                                
+                                {/* 1. 泳道背景 (贯穿整个动态高度) */}
+                                {activeLifelines.map(id => {
+                                    const entity = ENTITIES[id];
+                                    const pos = getLifelinePosition(id);
+                                    return (
+                                        <div key={id} className="absolute top-0 bottom-0 flex flex-col items-center" style={{ left: `${pos}%`, transform: 'translateX(-50%)' }}>
+                                            <div className="sticky top-0 z-20 pt-4 pb-2 bg-slate-900 w-full flex justify-center">
+                                                <div className={`px-4 py-2 rounded-lg border bg-slate-800 shadow-xl flex flex-col items-center w-28 text-center text-sm font-bold ${entity.color}`}>
+                                                    <div className="text-2xl mb-1">{entity.icon}</div>
+                                                    <div className="truncate w-full">{entity.name}</div>
+                                                </div>
+                                            </div>
+                                            {/* 泳道虚线 */}
+                                            <div className={`w-0.5 flex-1 border-l-2 border-dashed border-slate-700 opacity-40`}></div>
+                                        </div>
+                                    );
+                                })}
+
+                                {/* 2. 步骤渲染 */}
+                                {sequence.map((step, idx) => {
+                                    if (idx > currentStepIndex) return null; 
+                                    
+                                    const isCurrent = idx === currentStepIndex;
+                                    const startPos = getLifelinePosition(step.from);
+                                    const endPos = getLifelinePosition(step.to);
+                                    const isLeftToRight = endPos > startPos;
+                                    const width = Math.abs(endPos - startPos);
+                                    const left = Math.min(startPos, endPos);
+                                    
+                                    const top = 100 + idx * 80;
+
+                                    return (
+                                        <div key={idx} className="absolute w-full" style={{ top: `${top}px`, height: '80px' }}>
+                                            {/* 自环的情况 */}
+                                            {step.from === step.to ? (
+                                                <div className="absolute flex flex-col items-center" style={{ left: `${startPos}%`, transform: 'translateX(-50%)' }}>
+                                                    <div className={`text-xs font-bold p-2 rounded border ${isCurrent ? 'bg-yellow-900/50 border-yellow-500 text-yellow-200' : 'bg-slate-800 border-slate-600 text-slate-300'} transition-all duration-500`}>
+                                                        ⟳ {step.label}
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                // 正常箭头
+                                                <div className="absolute" style={{ left: `${left}%`, width: `${width}%` }}>
+                                                    <Arrow 
+                                                        widthPercent={100} 
+                                                        isLeftToRight={isLeftToRight} 
+                                                        label={step.label} 
+                                                        isCurrent={isCurrent}
+                                                        index={idx}
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Right: Logs */}
+                        <div className="w-96 bg-slate-950 border-l border-slate-800 flex flex-col z-30 shrink-0">
+                            <div className="p-3 border-b border-slate-800 bg-slate-900 text-sm font-bold text-slate-300 uppercase flex justify-between items-center">
+                                <span>数据包日志 (Payload Log)</span>
+                                <button onClick={()=>setSequence([])} className="text-slate-500 hover:text-white px-2 py-1 border border-slate-700 rounded text-xs">清除</button>
+                            </div>
+                            <div className="flex-1 overflow-y-auto p-3 custom-scroll space-y-3 font-mono text-xs">
+                                {sequence.slice(0, currentStepIndex + 1).map((step, idx) => (
+                                    <div key={idx} className={`rounded border p-3 transition-all duration-500 ${idx === currentStepIndex ? 'bg-slate-900 border-yellow-500/50 shadow-lg ring-1 ring-yellow-500/20' : 'bg-slate-900/60 border-slate-700'}`}>
+                                        <div className="flex items-center gap-2 mb-2 text-slate-400 font-bold">
+                                            <span className="bg-slate-800 px-2 rounded text-white">{idx + 1}</span>
+                                            <span className={`${ENTITIES[step.from].color}`}>{step.from}</span>
+                                            <span className="text-slate-600">➔</span>
+                                            <span className={`${ENTITIES[step.to].color}`}>{step.to}</span>
+                                        </div>
+                                        <div className="text-slate-300 overflow-x-auto bg-slate-950 p-2 rounded border border-slate-800">
+                                            <pre className="text-xs leading-relaxed">{JSON.stringify(step.data, null, 2)}</pre>
+                                        </div>
+                                    </div>
+                                ))}
+                                {currentStepIndex === -1 && <div className="text-center text-slate-600 mt-20 text-sm">请配置并点击运行...</div>}
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

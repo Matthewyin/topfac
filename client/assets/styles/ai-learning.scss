@@ -1,0 +1,180 @@
+/**
+ * AI 架构时序模拟器 - 样式文件
+ * 适配浅色主题 + Vuetify Material Design
+ */
+
+@use './variables.scss' as *;
+@use 'sass:map';
+
+// === 颜色系统 ===
+$ai-bg-page: #FAFAFA;           // 页面背景
+$ai-bg-diagram: #F5F5F5;        // 时序图背景
+$ai-bg-card: #FFFFFF;           // 卡片背景
+$ai-border-light: #E0E0E0;      // 浅边框
+$ai-border-medium: #BDBDBD;     // 中边框
+$ai-text-primary: #212121;      // 主文本
+$ai-text-secondary: #757575;    // 次要文本
+
+// 箭头颜色
+$arrow-current: #FFC107;        // 当前步骤（黄色）
+$arrow-history: #9E9E9E;        // 历史步骤（灰色）
+
+// === 间距系统 ===
+$controls-height: 72px;         // 控制面板高度
+$logs-width: 400px;             // 日志面板宽度（桌面端）
+$lifeline-spacing: 120px;       // 泳道间距
+$step-height: 80px;             // 步骤高度
+
+// === AI Flow 页面容器 ===
+.ai-flow-page {
+  background: $ai-bg-page;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+// === 控制面板 ===
+.controls-bar {
+  height: $controls-height;
+  border-bottom: 1px solid $ai-border-light;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  z-index: 10;
+}
+
+// === 内容区域 ===
+.content-area {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+}
+
+// === 时序图容器 ===
+.diagram-container {
+  flex: 1;
+  background: $ai-bg-diagram;
+  overflow-y: auto;
+  position: relative;
+  
+  // 自定义滚动条
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  &::-webkit-scrollbar-track {
+    background: #E0E0E0;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #BDBDBD;
+    border-radius: 4px;
+    &:hover {
+      background: #9E9E9E;
+    }
+  }
+}
+
+// === 泳道样式 ===
+.lifeline-container {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.lifeline-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding-top: 16px;
+  padding-bottom: 8px;
+  background: $ai-bg-diagram;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.lifeline-badge {
+  width: 112px;
+  text-align: center;
+  border: 1px solid $ai-border-light;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.lifeline-line {
+  width: 2px;
+  flex: 1;
+  border-left: 2px dashed $ai-border-medium;
+  opacity: 0.4;
+}
+
+// === 箭头容器 ===
+.arrow-wrapper {
+  position: absolute;
+  width: 100%;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+// === SVG 动画 ===
+@keyframes drawLine {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes fadeArrow {
+  to {
+    opacity: 1;
+  }
+}
+
+// === 箭头标签 ===
+.arrow-label {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  text-align: center;
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+  
+  &.is-current {
+    opacity: 1;
+    animation: fadeArrow 0.3s ease-out forwards;
+  }
+}
+
+// === 日志面板 ===
+.logs-panel {
+  width: $logs-width;
+  background: $ai-bg-card;
+  border-left: 1px solid $ai-border-light;
+  display: flex;
+  flex-direction: column;
+  z-index: 30;
+  flex-shrink: 0;
+  
+  // 移动端隐藏
+  @media (max-width: 959px) {
+    display: none;
+  }
+}
+
+// === JSON 显示 ===
+.json-display {
+  font-family: 'JetBrains Mono', 'SF Mono', 'Monaco', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  color: $ai-text-primary;
+  background: #F8F9FA;
+  padding: 12px;
+  border-radius: 4px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+

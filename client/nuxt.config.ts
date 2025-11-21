@@ -39,7 +39,8 @@ export default defineNuxtConfig({
     '@mdi/font/css/materialdesignicons.min.css',
     '@excalidraw/excalidraw/index.css',
     '~/assets/styles/variables.scss',
-    '~/assets/styles/responsive.scss'
+    '~/assets/styles/responsive.scss',
+    '~/assets/styles/ai-learning.scss'
   ],
 
   // 构建配置
