@@ -47,68 +47,7 @@
           </v-card>
         </v-col>
 
-        <!-- 右卡：Excel 合并 -->
-        <v-col cols="12" md="6" lg="5">
-          <v-card
-            class="dashboard-card responsive-card"
-            elevation="4"
-            hover
-            @click="goExcel"
-          >
-            <v-card-text class="pa-6">
-              <div class="text-center">
-                <v-avatar size="80" color="green" class="mb-4">
-                  <v-icon size="40" color="white">mdi-file-excel-outline</v-icon>
-                </v-avatar>
 
-                <h2 class="text-h5 font-weight-bold mb-3">
-                  Excel 合并
-                </h2>
-
-                <p class="text-body-1 text-medium-emphasis mb-4">
-                  本地合并多个 sheet，支持预览与导出 CSV，数据不上传服务器
-                </p>
-
-                <div class="text-center">
-                  <p class="text-body-2 text-medium-emphasis">
-                    点击进入完整工具页进行配置与合并
-                  </p>
-                </div>
-              </div>
-            </v-card-text>
-          </v-card>
-        </v-col>
-        <!-- 第三卡：RAID 容量计算 -->
-        <v-col cols="12" md="6" lg="5">
-          <v-card
-            class="dashboard-card responsive-card"
-            elevation="4"
-            hover
-            @click="goRaid"
-          >
-            <v-card-text class="pa-6">
-              <div class="text-center">
-                <v-avatar size="80" color="deep-purple" class="mb-4">
-                  <v-icon size="40" color="white">mdi-harddisk</v-icon>
-                </v-avatar>
-
-                <h2 class="text-h5 font-weight-bold mb-3">
-                  RAID 容量计算
-                </h2>
-
-                <p class="text-body-1 text-medium-emphasis mb-4">
-                  计算 RAID 0/1/5/6/10/50/60 可用容量、冗余与利用率（含热备与分组）
-                </p>
-
-                <div class="text-center">
-                  <p class="text-body-2 text-medium-emphasis">
-                    点击进入计算页面
-                  </p>
-                </div>
-              </div>
-            </v-card-text>
-          </v-card>
-        </v-col>
 
       </v-row>
 
@@ -128,8 +67,7 @@ definePageMeta({
 const router = useRouter()
 
 
-// 跳转到 Excel 合并页面
-const goExcel = () => router.push('/excel-merge')
+
 
 
 /**
@@ -139,8 +77,7 @@ function navigateToProjects() {
   router.push('/topology-projects')
 }
 
-// 跳转到 RAID 容量计算页面
-const goRaid = () => router.push('/raid-calculator')
+
 
 // 页面加载时的初始化
 onMounted(() => {
