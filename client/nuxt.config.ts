@@ -81,7 +81,21 @@ export default defineNuxtConfig({
       ],
       link: [
         { rel: 'canonical', href: 'https://topfac.nssa.io' }
-      ]
+      ],
+      script: process.env.NUXT_PUBLIC_GOOGLE_ANALYTICS_ID ? [
+        {
+          src: `https://www.googletagmanager.com/gtag/js?id=${process.env.NUXT_PUBLIC_GOOGLE_ANALYTICS_ID}`,
+          async: true
+        },
+        {
+          innerHTML: `
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${process.env.NUXT_PUBLIC_GOOGLE_ANALYTICS_ID}');
+          `
+        }
+      ] : []
     }
   },
 
@@ -119,7 +133,6 @@ export default defineNuxtConfig({
   // 插件配置
   plugins: [
     { src: '~/plugins/01.vuetify.client.ts', mode: 'client' },
-    { src: '~/plugins/topology-api.client.ts', mode: 'client' },
-    { src: '~/plugins/google-analytics.client.ts', mode: 'client' }
+    { src: '~/plugins/topology-api.client.ts', mode: 'client' }
   ]
 })
