@@ -1,44 +1,41 @@
 /**
- * AI 架构时序模拟器 - 样式文件
- * 适配浅色主题 + Vuetify Material Design
+ * AI 架构时序模拟器 - Cyber Glass 样式文件
+ * 适配深色主题 + Cyberpunk Aesthetics
  */
 
 @use './variables.scss' as *;
 @use 'sass:map';
 
-// === 颜色系统 ===
-$ai-bg-page: #FAFAFA;           // 页面背景
-$ai-bg-diagram: #F5F5F5;        // 时序图背景
-$ai-bg-card: #FFFFFF;           // 卡片背景
-$ai-border-light: #E0E0E0;      // 浅边框
-$ai-border-medium: #BDBDBD;     // 中边框
-$ai-text-primary: #212121;      // 主文本
-$ai-text-secondary: #757575;    // 次要文本
-
-// 箭头颜色
-$arrow-current: #FFC107;        // 当前步骤（黄色）
-$arrow-history: #9E9E9E;        // 历史步骤（灰色）
+// === 颜色系统 (Cyber Glass) ===
+// 使用 CSS 变量替代硬编码
+$neon-cyan: #00F0FF;
+$neon-purple: #7000FF;
+$neon-green: #00FF9D;
 
 // === 间距系统 ===
-$controls-height: 72px;         // 控制面板高度
-$logs-width: 400px;             // 日志面板宽度（桌面端）
-$lifeline-spacing: 120px;       // 泳道间距
-$step-height: 80px;             // 步骤高度
+$controls-height: 72px;
+$logs-width: 400px;
+$lifeline-spacing: 120px;
+$step-height: 80px;
 
 // === AI Flow 页面容器 ===
 .ai-flow-page {
-  background: $ai-bg-page;
+  background: var(--bg-primary);
   height: 100vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  color: var(--text-primary);
+  transition: background 0.3s ease;
 }
 
 // === 控制面板 ===
 .controls-bar {
   height: $controls-height;
-  border-bottom: 1px solid $ai-border-light;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  background: var(--appbar-bg) !important;
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--glass-border);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   z-index: 10;
 }
 
@@ -47,27 +44,31 @@ $step-height: 80px;             // 步骤高度
   flex: 1;
   overflow: hidden;
   display: flex;
+  background-image: 
+    linear-gradient(var(--grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+  background-size: 30px 30px;
 }
 
 // === 时序图容器 ===
 .diagram-container {
   flex: 1;
-  background: $ai-bg-diagram;
+  background: transparent;
   overflow-y: auto;
   position: relative;
   
-  // 自定义滚动条
+  // 自定义滚动条 (深色)
   &::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
   }
   &::-webkit-scrollbar-track {
-    background: #E0E0E0;
+    background: transparent;
   }
   &::-webkit-scrollbar-thumb {
-    background: #BDBDBD;
-    border-radius: 4px;
+    background: var(--scrollbar-thumb);
+    border-radius: 3px;
     &:hover {
-      background: #9E9E9E;
+      background: var(--scrollbar-thumb-hover);
     }
   }
 }
@@ -88,24 +89,38 @@ $step-height: 80px;             // 步骤高度
   z-index: 20;
   padding-top: 16px;
   padding-bottom: 8px;
-  background: $ai-bg-diagram;
+  background: var(--bg-primary); // 使用背景色遮挡
+  opacity: 0.95;
+  backdrop-filter: blur(10px);
   width: 100%;
   display: flex;
   justify-content: center;
+  border-bottom: 1px solid var(--glass-border);
 }
 
 .lifeline-badge {
   width: 112px;
   text-align: center;
-  border: 1px solid $ai-border-light;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  background: rgba(0, 240, 255, 0.05) !important;
+  border: 1px solid rgba(0, 240, 255, 0.3) !important;
+  color: var(--text-neon) !important;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.1);
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+[data-theme='light'] .lifeline-badge {
+    color: var(--text-neon) !important;
+    border-color: var(--text-neon) !important;
+    background: rgba(0, 102, 255, 0.05) !important;
+    box-shadow: none;
 }
 
 .lifeline-line {
   width: 2px;
   flex: 1;
-  border-left: 2px dashed $ai-border-medium;
-  opacity: 0.4;
+  border-left: 1px dashed var(--text-secondary);
+  opacity: 0.3;
+  background: transparent;
 }
 
 // === 箭头容器 ===
@@ -129,30 +144,41 @@ $step-height: 80px;             // 步骤高度
 @keyframes fadeArrow {
   to {
     opacity: 1;
+    filter: drop-shadow(0 0 5px $neon-cyan);
   }
 }
 
 // === 箭头标签 ===
 .arrow-label {
   position: absolute;
-  top: 0;
+  top: -10px;
   width: 100%;
   text-align: center;
   transform: translateY(-50%);
   opacity: 0;
   transition: opacity 0.3s ease-out;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
   
   &.is-current {
     opacity: 1;
+    color: var(--text-primary);
+    text-shadow: 0 0 8px $neon-cyan;
     animation: fadeArrow 0.3s ease-out forwards;
   }
+}
+[data-theme='light'] .arrow-label.is-current {
+   text-shadow: none;
+   color: var(--text-neon);
+   font-weight: bold;
 }
 
 // === 日志面板 ===
 .logs-panel {
   width: $logs-width;
-  background: $ai-bg-card;
-  border-left: 1px solid $ai-border-light;
+  background: var(--glass-surface);
+  backdrop-filter: blur(25px);
+  border-left: 1px solid var(--glass-border);
   display: flex;
   flex-direction: column;
   z-index: 30;
@@ -166,15 +192,65 @@ $step-height: 80px;             // 步骤高度
 
 // === JSON 显示 ===
 .json-display {
-  font-family: 'JetBrains Mono', 'SF Mono', 'Monaco', monospace;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-size: 12px;
   line-height: 1.6;
-  color: $ai-text-primary;
-  background: #F8F9FA;
+  color: var(--text-primary); 
+  background: rgba(0, 0, 0, 0.2);
   padding: 12px;
   border-radius: 4px;
   overflow-x: auto;
   white-space: pre-wrap;
   word-break: break-all;
+  border: 1px solid var(--glass-border);
+
+  &::-webkit-scrollbar {
+    height: 4px;
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+[data-theme='light'] .json-display {
+    background: rgba(0, 0, 0, 0.03);
+    color: #333;
+}
+
+
+// === 步骤项 ===
+.step-item {
+  border-bottom: 1px solid var(--glass-border);
+  transition: background 0.2s;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.03);
+  }
+  
+  &.active-step {
+    background: rgba(0, 240, 255, 0.05);
+    border-left: 2px solid $neon-cyan;
+  }
+}
+[data-theme='light'] .step-item:hover {
+    background: rgba(0,0,0,0.03);
+}
+[data-theme='light'] .step-item.active-step {
+    background: rgba(0, 102, 255, 0.05);
+    border-left: 2px solid #0066FF;
+}
+
+// 标签样式覆盖 (如果需要)
+.v-chip {
+  &.bg-primary {
+    background: rgba(0, 240, 255, 0.15) !important;
+    color: $neon-cyan !important;
+    border: 1px solid rgba(0, 240, 255, 0.3);
+  }
+}
+[data-theme='light'] .v-chip.bg-primary {
+    background: rgba(0, 102, 255, 0.1) !important;
+    color: #0066FF !important;
+    border-color: #0066FF;
 }
 

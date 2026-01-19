@@ -78,6 +78,8 @@ Thumbs.db
 .taskmaster/
 .windsurfrules
 .roomodes
+.agent/
+.shared/
 
 # Build outputs
 dist/

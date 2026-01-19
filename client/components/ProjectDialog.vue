@@ -4,25 +4,26 @@
     @update:model-value="$emit('update:modelValue', $event)"
     max-width="800"
     persistent
+    class="glass-dialog-backdrop"
   >
-    <v-card class="project-dialog">
+    <v-card class="project-dialog card-glass">
       <!-- 对话框标题 -->
-      <v-card-title class="d-flex align-center">
-        <v-icon class="mr-3" color="primary">
-          {{ isEditing ? 'mdi-pencil' : 'mdi-plus' }}
+      <v-card-title class="d-flex align-center py-4 px-6 border-b-glass">
+        <v-icon class="mr-3 neon-icon" color="primary" size="28">
+          {{ isEditing ? 'mdi-pencil-circle-outline' : 'mdi-plus-circle-outline' }}
         </v-icon>
-        <span class="text-h5 font-weight-bold">
-          {{ isEditing ? '编辑项目' : '创建新项目' }}
+        <span class="text-h5 font-weight-bold text-shadow-glow">
+          {{ isEditing ? '编辑项目配置' : '创建新项目' }}
         </span>
         <v-spacer />
         <v-btn
           icon="mdi-close"
           variant="text"
+          color="grey-lighten-1"
+          class="close-btn"
           @click="closeDialog"
         />
       </v-card-title>
-      
-      <v-divider />
       
       <!-- 表单内容 -->
       <v-card-text class="pa-6">
@@ -33,12 +34,16 @@
               <v-text-field
                 v-model="form.project_name"
                 label="项目名称"
-                placeholder="请输入项目名称"
+                placeholder="给您的项目起个响亮的名字"
                 variant="outlined"
+                bg-color="rgba(0,0,0,0.2)"
+                color="primary"
+                base-color="rgba(255,255,255,0.3)"
                 :rules="nameRules"
                 :counter="100"
                 required
                 prepend-inner-icon="mdi-folder-outline"
+                class="cyber-input"
               />
             </v-col>
             
@@ -47,13 +52,17 @@
               <v-textarea
                 v-model="form.description"
                 label="项目描述"
-                placeholder="请输入项目描述（可选）"
+                placeholder="简要描述项目的目标和范围..."
                 variant="outlined"
+                bg-color="rgba(0,0,0,0.2)"
+                color="primary"
+                base-color="rgba(255,255,255,0.3)"
                 :rules="descriptionRules"
                 :counter="500"
                 rows="3"
                 auto-grow
                 prepend-inner-icon="mdi-text"
+                class="cyber-input"
               />
             </v-col>
             
@@ -61,23 +70,29 @@
             <v-col cols="12">
               <v-textarea
                 v-model="form.text_content"
-                :label="isEditing ? '拓扑文本内容' : '拓扑文本模板（可直接修改）'"
-                :placeholder="isEditing ? '请输入网络拓扑描述文本' : '已提供默认模板，您可以直接在此基础上修改'"
+                :label="isEditing ? '拓扑定义脚本' : '初始拓扑脚本 (模板)'"
+                :placeholder="isEditing ? '请输入网络拓扑描述文本' : '已载入标准模板，您可以直接修改'"
                 variant="outlined"
+                bg-color="rgba(0,0,0,0.2)"
+                color="primary"
+                base-color="rgba(255,255,255,0.3)"
                 :rules="textContentRules"
                 rows="12"
                 auto-grow
-                prepend-inner-icon="mdi-file-document-outline"
+                prepend-inner-icon="mdi-code-braces"
+                class="cyber-input code-font"
               >
                 <template #append-inner>
-                  <v-tooltip text="查看文本格式说明">
+                  <v-tooltip text="查看语法参考" location="top">
                     <template #activator="{ props }">
                       <v-btn
                         icon="mdi-help-circle-outline"
                         variant="text"
                         size="small"
+                        color="primary"
                         v-bind="props"
                         @click="showFormatHelp = true"
+                        class="glow-icon-btn"
                       />
                     </template>
                   </v-tooltip>
@@ -85,26 +100,25 @@
               </v-textarea>
 
               <!-- 新项目提示 -->
-              <div v-if="!isEditing" class="text-caption text-grey-darken-1 mt-2">
-                💡 <strong>提示：</strong>已为您提供一个企业网络拓扑模板，您可以直接在此基础上修改，或者清空后重新编写
+              <div v-if="!isEditing" class="d-flex align-center mt-2 px-2">
+                <v-icon size="16" color="primary" class="mr-2">mdi-lightbulb-on-outline</v-icon>
+                <span class="text-caption text-grey-lighten-1">
+                  提示：已预置标准企业网络拓扑模板，您可以直接修改或清空重写
+                </span>
               </div>
             </v-col>
             
-            <!-- 格式提示 -->
+    <!-- 格式提示 -->
             <v-col cols="12">
-              <v-alert
-                type="info"
-                variant="tonal"
-                density="compact"
-                class="text-body-2"
-              >
-                <template #prepend>
-                  <v-icon>mdi-information-outline</v-icon>
-                </template>
-                <strong>提示：</strong>
-                支持标准化的网络拓扑描述格式，包括区域定义、组件定义和连接关系。
-                可以在创建后继续编辑和完善。
-              </v-alert>
+              <div class="info-glass pa-3 rounded-lg d-flex align-start">
+                <v-icon color="primary" class="mr-3 mt-1">mdi-information-outline</v-icon>
+                <div class="text-caption text-secondary" style="line-height: 1.6;">
+                  <strong class="text-primary-high-emphasis">支持自然语言描述：</strong>
+                  系统支持标准化的网络拓扑描述格式（区域、组件、连接关系）。
+                  <br>
+                  您可以在创建后进入编辑器继续完善脚本。
+                </div>
+              </div>
             </v-col>
           </v-row>
         </v-form>
@@ -115,8 +129,10 @@
         <v-spacer />
         <v-btn
           variant="text"
+          color="secondary"
           @click="closeDialog"
           :disabled="saving"
+          class="mr-2"
         >
           取消
         </v-btn>
@@ -126,76 +142,79 @@
           :loading="saving"
           :disabled="!formValid"
           @click="saveProject"
+          class="glow-button px-6 font-weight-bold"
+          rounded="pill"
         >
-          {{ isEditing ? '保存更改' : '创建项目' }}
+          {{ isEditing ? '保存变更' : '立即创建' }}
         </v-btn>
       </v-card-actions>
     </v-card>
     
     <!-- 格式帮助对话框 -->
     <v-dialog v-model="showFormatHelp" max-width="600">
-      <v-card>
-        <v-card-title class="d-flex align-center">
-          <v-icon class="mr-3" color="info">mdi-help-circle</v-icon>
-          文本格式说明
+      <v-card class="card-glass help-card">
+        <v-card-title class="d-flex align-center border-b-glass py-3">
+          <v-icon class="mr-2" color="primary">mdi-school-outline</v-icon>
+          <span class="text-primary-high-emphasis">语法参考指南</span>
           <v-spacer />
           <v-btn
             icon="mdi-close"
             variant="text"
+            size="small"
+            color="grey"
             @click="showFormatHelp = false"
           />
         </v-card-title>
         
-        <v-divider />
-        
         <v-card-text class="pa-6">
           <div class="format-help">
-            <h4 class="text-h6 mb-3">标准格式示例：</h4>
+            <h4 class="text-subtitle-1 font-weight-bold text-primary mb-3">标准语句示例</h4>
             
-            <div class="format-example-text">
-              <p class="text-body-2 mb-2"><strong>网络拓扑语言描述格式：</strong></p>
-              <p class="text-body-2 mb-1">- 【环境】【数据中心】的【区域】【设备】连接【环境】【数据中心】的【区域】【设备】 </p>
+            <div class="code-block-glass mb-6">
+              <code class="text-success">- 【AB区】【数据中心】的【DMZ区】【防火墙】连接【AB区】【数据中心】的【核心区】【核心交换机】</code>
             </div>
             
-            <h4 class="text-h6 mt-6 mb-3">格式说明：</h4>
-            <v-list density="compact">
-              <v-list-item>
+            <h4 class="text-subtitle-1 font-weight-bold text-primary mb-3">解析规则说明</h4>
+            <v-list density="compact" class="bg-transparent">
+              <v-list-item class="px-0">
                 <template #prepend>
-                  <v-icon color="primary">mdi-numeric-1-circle</v-icon>
+                  <v-icon color="secondary" size="small" class="mr-3">mdi-numeric-1-box</v-icon>
                 </template>
-                <v-list-item-title>每行以 "-" 开头描述一个连接关系</v-list-item-title>
-              </v-list-item>
-              
-              <v-list-item>
-                <template #prepend>
-                  <v-icon color="primary">mdi-numeric-2-circle</v-icon>
-                </template>
-                <v-list-item-title>
-                  使用【环境】【数据中心】的【区域】【设备】连接 
-                </v-list-item-title>
-                <v-list-item-title>
-                  【环境】【数据中心】的【区域】【设备】格式
+                <v-list-item-title class="text-secondary text-wrap">
+                  每行代表一个连接关系，建议使用 <span class="text-primary font-weight-bold">-</span> 开头
                 </v-list-item-title>
               </v-list-item>
               
-              <v-list-item>
+              <v-list-item class="px-0">
                 <template #prepend>
-                  <v-icon color="primary">mdi-numeric-3-circle</v-icon>
+                  <v-icon color="secondary" size="small" class="mr-3">mdi-numeric-2-box</v-icon>
                 </template>
-                <v-list-item-title>设备名可以是主机名、应用名或网络设备名称</v-list-item-title>
+                <v-list-item-title class="text-secondary text-wrap">
+                  层级结构：<span class="text-primary-high-emphasis">【环境】【数据中心】【区域】【设备】</span>
+                </v-list-item-title>
+              </v-list-item>
+              
+              <v-list-item class="px-0">
+                <template #prepend>
+                  <v-icon color="secondary" size="small" class="mr-3">mdi-numeric-3-box</v-icon>
+                </template>
+                <v-list-item-title class="text-secondary text-wrap">
+                  设备名称支持自定义，如：Web服务器、MySQL主库、核心路由等
+                </v-list-item-title>
               </v-list-item>
             </v-list>
           </div>
         </v-card-text>
         
-        <v-card-actions class="pa-6 pt-0">
+        <v-card-actions class="pa-4 pt-0">
           <v-spacer />
           <v-btn
             color="primary"
-            variant="flat"
+            variant="tonal"
             @click="showFormatHelp = false"
+            class="px-6"
           >
-            我知道了
+            我明白了
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -259,14 +278,14 @@ const textContentRules = [
   (v: string) => !v || v.length <= 100000 || '文本内容不能超过100000个字符'
 ]
 
-// 默认模板文字 - 移到前面避免初始化顺序问题
+// 默认模板文字
 const getDefaultTemplate = () => {
-  return `
-- 【环境】【数据中心】的【区域】【设备】连接【环境】【数据中心】的【区域】【设备】
-`
+  return `- 【生产环境】【北京数据中心】的【DMZ区】【Nginx负载均衡】连接【生产环境】【北京数据中心】的【WEB区】【Web应用服务器集群】
+- 【生产环境】【北京数据中心】的【WEB区】【Web应用服务器集群】连接【生产环境】【北京数据中心】的【APP区】【业务逻辑服务器】
+- 【生产环境】【北京数据中心】的【APP区】【业务逻辑服务器】连接【生产环境】【北京数据中心】的【DB区】【MySQL主从集群】`
 }
 
-// 重置表单 - 移到前面避免初始化顺序问题
+// 重置表单
 const resetForm = () => {
   form.project_name = ''
   form.description = ''
@@ -335,51 +354,112 @@ const saveProject = async () => {
       errorMessage = error.message
     }
 
-    // 显示错误提示（这里可以集成Vuetify的snackbar或其他提示组件）
-    alert(errorMessage) // 临时使用alert，后续可以改为更好的UI组件
+    // 显示错误提示
+    alert(errorMessage)
   } finally {
     saving.value = false
   }
 }
 </script>
 
-<style scoped>
-.project-dialog {
-  border-radius: 16px !important;
+<style scoped lang="scss">
+/* REMOVED scoped .card-glass override */
+
+.border-b-glass {
+   border-bottom: 1px solid var(--glass-border);
 }
 
-.format-example-text {
-  background: #f8f9fa;
-  border-radius: 12px;
-  padding: 24px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+.neon-icon {
+  filter: drop-shadow(0 0 5px rgba(0, 240, 255, 0.5));
 }
 
-.format-example-text .text-body-2 {
-  line-height: 1.6;
-  color: #2d3748;
+.text-shadow-glow {
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+}
+/* No glow in light mode */
+:deep([data-theme='light']) .text-shadow-glow {
+    text-shadow: none;
+    color: var(--text-primary);
 }
 
-.format-example-text .ml-4 {
-  margin-left: 24px;
+.cyber-input {
+  :deep(.v-field__outline__start),
+  :deep(.v-field__outline__end),
+  :deep(.v-field__outline__notch) {
+    border-color: var(--glass-border) !important;
+  }
+  
+  :deep(.v-field--focused) {
+    .v-field__outline__start,
+    .v-field__outline__end,
+    .v-field__outline__notch {
+      border-color: #00F0FF !important;
+      box-shadow: 0 0 10px rgba(0, 240, 255, 0.2) inset;
+    }
+  }
+  
+  :deep(input), :deep(textarea) {
+    color: var(--text-primary) !important;
+  }
+  
+  :deep(.v-label) {
+    color: var(--text-secondary) !important;
+  }
 }
 
-.format-help {
-  max-height: 500px;
-  overflow-y: auto;
+.code-font :deep(textarea) {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
 }
 
-.v-text-field,
-.v-textarea {
-  border-radius: 8px !important;
+.glow-button {
+  background: linear-gradient(135deg, #00F0FF 0%, #0088FF 100%) !important;
+  color: #000 !important;
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+  transition: all 0.3s ease;
+  
+  &:hover {
+    box-shadow: 0 0 25px rgba(0, 240, 255, 0.5);
+    transform: translateY(-1px);
+  }
 }
 
-.v-btn {
-  border-radius: 8px !important;
+.glow-icon-btn:hover {
+  color: #00F0FF !important;
+  filter: drop-shadow(0 0 5px rgba(0, 240, 255, 0.5));
 }
 
-.v-alert {
-  border-radius: 8px !important;
+.close-btn:hover {
+  color: #FF2E2E !important;
+  background: rgba(255, 46, 46, 0.1);
+}
+
+.info-glass {
+  background: rgba(0, 240, 255, 0.03);
+  border: 1px solid rgba(0, 240, 255, 0.1);
+}
+
+.code-block-glass {
+  background: var(--code-bg);
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px dashed var(--glass-border);
+}
+
+.help-card {
+  border: 1px solid rgba(0, 240, 255, 0.2) !important;
+}
+
+/* 滚动条美化 */
+:deep(textarea::-webkit-scrollbar) {
+  width: 6px;
+}
+:deep(textarea::-webkit-scrollbar-thumb) {
+  background: var(--scrollbar-thumb);
+  border-radius: 3px;
+}
+:deep(textarea::-webkit-scrollbar-track) {
+  background: transparent;
 }
 </style>

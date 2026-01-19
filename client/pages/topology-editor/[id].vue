@@ -35,25 +35,25 @@
     <div v-else class="editor-container">
       <!-- 顶部工具栏 -->
       <v-app-bar
-        color="white"
-        elevation="1"
+        elevation="0"
         height="64"
         class="editor-toolbar"
+        style="background: transparent;"
       >
         <div class="d-flex align-center w-100 px-4">
           <!-- 返回按钮 -->
           <v-btn
             icon="mdi-arrow-left"
             variant="text"
-            class="mr-3"
+            class="mr-3 text-grey-lighten-1"
             @click="$router.push('/topology-projects')"
           />
 
           <!-- 项目图标和信息 -->
           <v-icon class="mr-2" color="primary">mdi-sitemap</v-icon>
           <div>
-            <div class="text-h6 font-weight-bold">{{ project.project_name }}</div>
-            <div class="text-caption text-grey-darken-1">
+            <div class="text-h6 font-weight-bold text-white">{{ project.project_name }}</div>
+            <div class="text-caption text-grey">
               当前版本：v{{ currentVersion?.version || 0 }}
               <span v-if="currentVersion?.status" class="mx-1">•</span>
               <span v-if="currentVersion?.status">{{ getVersionStatusText(currentVersion.status as VersionStatus) }}</span>
@@ -76,12 +76,13 @@
                   {{ currentVersionText }}
                 </v-btn>
               </template>
-              <v-list density="compact" min-width="200">
+              <v-list density="compact" min-width="200" class="card-glass border-glass">
                 <v-list-item
                   v-for="version in versionOptions"
                   :key="version.value"
                   :value="version.value"
                   @click="selectVersion(version.value)"
+                  class="text-grey-lighten-1"
                 >
                   <v-list-item-title>{{ version.title }}</v-list-item-title>
                 </v-list-item>
@@ -92,7 +93,7 @@
             <v-btn
               variant="outlined"
               prepend-icon="mdi-content-save"
-              class="mr-3"
+              class="mr-3 text-grey-lighten-1"
               :loading="saving"
               @click="saveCurrentVersion"
             >
@@ -102,13 +103,12 @@
             <!-- 生成拓扑图圆形按钮 -->
             <v-btn
               icon
-              color="primary"
               size="large"
               class="generate-btn"
               :loading="processing"
               @click="processWorkflow"
             >
-              <v-icon size="24">mdi-play</v-icon>
+              <v-icon size="24" color="black">mdi-play</v-icon>
               <v-tooltip activator="parent" location="bottom">
                 生成拓扑图
               </v-tooltip>
@@ -298,14 +298,14 @@ import { useRoute, useRouter } from 'vue-router'
 
 // 定义类型
 interface Project {
-  _id: string
+  id: string
   project_name: string
   description?: string
   [key: string]: any
 }
 
 interface ProjectVersion {
-  _id: string
+  id: string
   version: number
   status: string
   text_content?: string
@@ -314,9 +314,22 @@ interface ProjectVersion {
   [key: string]: any
 }
 
-
+// 修正后的响应类型
+interface ProcessWorkflowResponse {
+  version_id: string
+  version: number
+  parsed_data: any
+  xml_generated: boolean
+  xml_length: number
+  processing_steps?: any[]
+}
 
 type VersionStatus = 'draft' | 'parsed' | 'generated' | 'published';
+
+// AI面板组件引用类型
+interface AIConversionPanelInstance {
+  refreshConfigStatus: () => Promise<void>
+}
 
 // 页面元数据
 definePageMeta({
@@ -344,8 +357,7 @@ const showAIPanel = ref(false)
 const showAIConfigDialog = ref(false)
 
 // AI转换面板的引用
-const aiConversionPanelRef = ref(null)
-
+const aiConversionPanelRef = ref<AIConversionPanelInstance | null>(null)
 
 // 简化的处理状态（移除AI步骤追踪）
 const currentVersionId = ref('')
@@ -377,19 +389,23 @@ const loadProject = async () => {
     // 加载项目基本信息
     const projectResponse = await $topologyApi.projects.getById(projectId.value)
     if (!projectResponse.data) throw new Error('项目数据加载失败')
-    project.value = projectResponse.data
+    // 强制类型转换以适配接口差异
+    project.value = projectResponse.data as unknown as Project
 
     // 加载项目版本列表
     const versionsResponse = await $topologyApi.projects.getVersions(projectId.value)
     if (!versionsResponse.data?.versions) throw new Error('项目版本列表加载失败')
-    versions.value = versionsResponse.data.versions
+    
+    // 确保 id 字段存在
+    versions.value = versionsResponse.data.versions.map((v: any) => ({
+      ...v,
+      id: v.id || v._id // 兼容 id 和 _id
+    })) as ProjectVersion[]
 
     // 修复逻辑：优先选择正在处理中的版本，而不是最新版本
     if (versions.value.length > 0) {
-      let targetVersion = null
-
-      // 选择最新版本（简化逻辑，移除AI处理状态检查）
-      targetVersion = versions.value[0]
+      // 选择最新版本
+      const targetVersion = versions.value[0]
       console.log('选择最新版本:', targetVersion.id, 'v' + targetVersion.version)
 
       selectedVersionId.value = targetVersion.id
@@ -415,8 +431,15 @@ const loadVersion = async (versionId: string) => {
 
     // 更新版本信息
     if (!versionResponse.data) throw new Error('版本详情加载失败')
-    currentVersion.value = versionResponse.data;
-    textContent.value = versionResponse.data.text_content || '';
+    
+    const versionData = versionResponse.data as any
+    // 确保类型匹配
+    currentVersion.value = {
+      ...versionData,
+      id: versionData.id || versionData._id
+    } as ProjectVersion
+    
+    textContent.value = currentVersion.value?.text_content || '';
 
   } catch (error) {
     console.error('加载版本失败:', error);
@@ -453,6 +476,8 @@ const saveCurrentVersion = async () => {
 const processWorkflow = async () => {
   if (!textContent.value.trim()) {
     // 显示提示：请先输入文本内容
+    // TODO: 使用全局通知替代 alert
+    alert('请先输入网络拓扑描述文本')
     return
   }
 
@@ -473,51 +498,53 @@ const processWorkflow = async () => {
     // 在发送到后端之前，对文本内容进行大小写标准化处理
     const processedTextContent = textContent.value.toUpperCase()
 
-    // 执行完整工作流（新的3步本地处理）
+    // 执行完整工作流
     const response = await $topologyApi.projects.processWorkflow(projectId.value, {
       text_content: processedTextContent
     })
 
     console.log('主页面: 工作流处理完成', response)
 
-    if (response.success && response.data?.version_id) {
+    if (response.success && response.data) {
+      // 类型断言
+      const responseData = response.data as ProcessWorkflowResponse
+      
       // 保存步骤数据（在重新加载之前）
-      const completedSteps = response.data.processing_steps || []
+      const completedSteps = responseData.processing_steps || []
 
-      // 设置新版本
-      currentVersionId.value = response.data.version_id
-      selectedVersionId.value = response.data.version_id
+      if (responseData.version_id) {
+          // 设置新版本
+          currentVersionId.value = responseData.version_id
+          selectedVersionId.value = responseData.version_id
 
-      // 重新加载项目数据以获取最新版本
-      await loadProject()
+          // 重新加载项目数据以获取最新版本
+          await loadProject()
 
-      // 选择新创建的版本
-      await loadVersion(response.data.version_id)
+          // 选择新创建的版本
+          await loadVersion(responseData.version_id)
 
-      // 在重新加载后恢复步骤数据
-      processingSteps.value = completedSteps
-      console.log('主页面: 恢复步骤数据:', processingSteps.value)
+          // 在重新加载后恢复步骤数据
+          processingSteps.value = completedSteps
+          console.log('主页面: 恢复步骤数据:', processingSteps.value)
 
-      console.log('主页面: 工作流完成，版本ID:', response.data.version_id)
+          console.log('主页面: 工作流完成，版本ID:', responseData.version_id)
+      }
     } else {
-      throw new Error(response.error || '处理失败')
+      throw new Error((response as any).error || '处理失败')
     }
 
   } catch (error) {
     console.error('处理工作流失败:', error)
-    // 可以在这里显示错误提示
+    alert('生成拓扑图失败，请查看控制台日志')
   } finally {
     // 重置处理状态
     processing.value = false
   }
 }
 
-
-
-
 // 步骤状态相关方法
 const getStepIcon = (status: string) => {
-  const iconMap = {
+  const iconMap: Record<string, string> = {
     'pending': 'mdi-clock-outline',
     'processing': 'mdi-loading',
     'completed': 'mdi-check',
@@ -527,7 +554,7 @@ const getStepIcon = (status: string) => {
 }
 
 const getStepColor = (status: string) => {
-  const colorMap = {
+  const colorMap: Record<string, string> = {
     'pending': 'grey-lighten-1',
     'processing': 'primary',
     'completed': 'success',
@@ -541,7 +568,7 @@ const getStepIconColor = (status: string) => {
 }
 
 const getStatusText = (status: string) => {
-  const statusMap = {
+  const statusMap: Record<string, string> = {
     'pending': '等待中',
     'processing': '处理中',
     'completed': '已完成',
@@ -550,31 +577,15 @@ const getStatusText = (status: string) => {
   return statusMap[status] || '未知'
 }
 
-const formatTime = (time: string) => {
-  return new Date(time).toLocaleString('zh-CN')
-}
-
-// 计算属性
-const isComplete = computed(() => overallStatus.value?.status === 'completed')
-const hasFailed = computed(() => processingSteps.value.some((step: any) => step.status === 'failed'))
-const totalDuration = computed(() => {
-  return processingSteps.value.reduce((sum: number, step: any) => sum + (step.duration || 0), 0)
+// 计算属性 - 修复 overallStatus 未定义的问题
+// 假设 processingSteps 最后一个步骤的状态代表整体状态，或者需要从 api 响应中获取
+// 这里简化为：如果最后一步完成，则整体完成
+const isComplete = computed(() => {
+    if (processingSteps.value.length === 0) return false
+    return processingSteps.value[processingSteps.value.length - 1].status === 'completed'
 })
 
-
-
-type StepStatus = 'pending' | 'processing' | 'completed' | 'failed';
-
-const getStepStatusInfo = (status: StepStatus | string) => {
-  const statusMap: Record<StepStatus, { color: string, icon: string, text: string }> = {
-    pending: { color: 'grey', icon: 'mdi-circle-outline', text: '待处理' },
-    processing: { color: 'blue', icon: 'mdi-autorenew', text: '处理中' },
-    completed: { color: 'green', icon: 'mdi-check-circle', text: '已完成' },
-    failed: { color: 'red', icon: 'mdi-alert-circle', text: '失败' }
-  };
-  return statusMap[status as StepStatus] || statusMap.pending;
-};
-
+const hasFailed = computed(() => processingSteps.value.some((step: any) => step.status === 'failed'))
 
 // 下载拓扑图
 const downloadTopology = async () => {
@@ -594,8 +605,6 @@ const onTextChange = () => {
   // 大小写转换将在生成拓扑图时进行
 }
 
-
-
 // AI转换完成处理
 const onAIConverted = (result: any) => {
   console.log('AI转换完成:', result)
@@ -608,8 +617,6 @@ const onAIConverted = (result: any) => {
   // 关闭AI面板
   showAIPanel.value = false
 
-  // 可以显示成功提示
-  // 这里应该使用全局通知组件
   console.log('AI转换的文本已应用到编辑器')
 }
 
@@ -658,6 +665,7 @@ const onNewVersionCreated = async () => {
   // 创建新版本
   if (!textContent.value.trim()) {
     // 显示提示：请先输入文本内容
+    alert('请先输入网络拓扑描述文本')
     return
   }
 
@@ -670,20 +678,22 @@ const onNewVersionCreated = async () => {
     const response = await $topologyApi.projects.createVersion(projectId.value, {
       text_content: processedTextContent
     })
-
-    // 重新加载项目数据
-    await loadProject()
-
-    // 选择新创建的版本
-    selectedVersionId.value = response.data.id
-    await loadVersion(response.data.id)
+    
+    if (response.data) {
+        // 重新加载项目数据
+        await loadProject()
+    
+        // 选择新创建的版本
+        // 确保 id 存在
+        const newVersionId = response.data.id || (response.data as any)._id
+        selectedVersionId.value = newVersionId
+        await loadVersion(newVersionId)
+    }
 
   } catch (error) {
     console.error('创建版本失败:', error)
   }
 }
-
-
 
 // 组件挂载
 onMounted(() => {
@@ -691,11 +701,9 @@ onMounted(() => {
   loadProject()
 })
 
-// 监听文本变化
+// 监听文本变化 - 暂时不需要复杂逻辑
 watch(textContent, (newValue, oldValue) => {
-  if (newValue !== oldValue) {
-    // 文本变化时的处理逻辑
-  }
+   // pass
 });
 </script>
 

@@ -1,5 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
+  compatibilityDate: '2026-01-19',
   devtools: { enabled: process.env.NODE_ENV === 'development' },
   ssr: false,
 
@@ -40,7 +41,8 @@ export default defineNuxtConfig({
     '@excalidraw/excalidraw/index.css',
     '~/assets/styles/variables.scss',
     '~/assets/styles/responsive.scss',
-    '~/assets/styles/ai-learning.scss'
+    '~/assets/styles/ai-learning.scss',
+    '~/assets/styles/cyber-theme.scss'
   ],
 
   // 构建配置

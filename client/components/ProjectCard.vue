@@ -1,164 +1,134 @@
 <template>
   <v-card
-    class="project-card"
+    class="project-card card-glass"
     :class="{ 'selected': selected }"
-    elevation="2"
-    hover
+    elevation="0"
     @click="$emit('view', project)"
+    v-ripple
   >
-    <!-- 项目状态指示器 -->
+    <!-- 项目状态指示器 (光剑风格) -->
     <div class="status-indicator" :class="statusClass" />
 
     <!-- 选择复选框 -->
-    <div class="selection-checkbox">
+    <div class="selection-checkbox" :class="{ 'show': selected }">
       <v-checkbox
         :model-value="selected"
         hide-details
         @click.stop
         @update:model-value="$emit('toggle-select', project.id)"
+        density="compact"
+        color="primary"
+        class="cy-checkbox"
       />
     </div>
 
     <!-- 卡片头部 -->
-    <v-card-title class="d-flex align-start">
-      <div class="flex-grow-1">
-        <h3 class="text-h6 font-weight-bold text-grey-darken-2 mb-1">
-          {{ project.project_name }}
+    <div class="card-header pt-4 px-4 d-flex align-start justify-space-between">
+      <div class="flex-grow-1 pr-4">
+        <h3 class="text-h6 font-weight-bold mb-1 d-flex align-center">
+          <span class="text-truncate" style="max-width: 200px;">{{ project.project_name }}</span>
           <v-chip
             v-if="project.status === 'deleted'"
             size="x-small"
             color="error"
-            variant="outlined"
-            class="ml-2"
+            variant="flat"
+            class="ml-2 px-2"
           >
             已删除
           </v-chip>
         </h3>
-        <p class="text-body-2 text-grey-darken-1 mb-0">
-          {{ formatDate(project.updated_at) }}
+        <p class="text-caption text-grey ml-1">
+          更新于 {{ formatDate(project.updated_at) }}
         </p>
       </div>
-      
-      <!-- 操作菜单 
-      <v-menu location="bottom end">
-        <template #activator="{ props }">
-          <v-btn
-            icon="mdi-dots-vertical"
-            variant="text"
-            size="small"
-            v-bind="props"
-            @click.stop
-          />
-        </template>
-        
-        <v-list density="compact">
-          <v-list-item
-            prepend-icon="mdi-content-copy"
-            title="复制"
-            @click="$emit('duplicate', project)"
-          />
-          <v-divider />
-          <v-list-item
-            prepend-icon="mdi-delete"
-            title="删除"
-            class="text-error"
-            @click="$emit('delete', project)"
-          />
-        </v-list>
-      </v-menu>
-      -->
-    </v-card-title>
+    </div>
   
-
     <!-- 项目描述 -->
-    <v-card-text class="pt-0">
-      <p class="text-body-2 text-grey-darken-1 mb-3">
-        {{ project.description || '暂无描述' }}
+    <v-card-text class="pt-2 px-4 pb-0">
+      <p class="text-body-2 text-grey-lighten-1 mb-4 description-text">
+        {{ project.description || '暂无项目描述...' }}
       </p>
       
       <!-- 项目统计信息 -->
-      <div class="d-flex align-center flex-wrap gap-2 mb-3">
+      <div class="d-flex align-center flex-wrap gap-2 mb-4">
         <v-chip
           size="small"
           variant="outlined"
           color="primary"
-          class="version-chip"
+          class="glass-chip"
         >
-          <v-icon start size="16">mdi-layers-outline</v-icon>
-          {{ project.version_count || 0 }} 个版本
+          <v-icon start size="14">mdi-layers-outline</v-icon>
+          v{{ project.current_version || 1 }}
         </v-chip>
 
         <v-chip
           v-if="project.latest_version"
           size="small"
-          variant="outlined"
+          variant="tonal"
           :color="versionStatusColor"
-          class="status-chip"
+          class="version-status-chip"
         >
-          <v-icon start size="16">{{ versionStatusIcon }}</v-icon>
+          <v-icon start size="14">{{ versionStatusIcon }}</v-icon>
           {{ versionStatusText }}
         </v-chip>
       </div>
-
-      <!-- 最新版本信息 - 优化布局 -->
-      <div v-if="project.latest_version" class="latest-version-info">
-        <div class="version-info-row">
-          <div class="d-flex align-center text-caption text-grey-darken-1">
-            <v-icon size="14" class="mr-1">mdi-clock-outline</v-icon>
-            <span class="version-text">当前版本：v{{ project.latest_version.version }}</span>
-            <span class="mx-2 text-grey-lighten-1">•</span>
-            <span class="date-text">{{ formatDate(project.latest_version.created_at) }}</span>
-          </div>
-        </div>
-
-        <div v-if="project.latest_version.has_xml" class="version-status-row">
-          <div class="d-flex align-center text-caption text-success mt-1">
-            <v-icon size="14" class="mr-1">mdi-check-circle</v-icon>
-            <span>已生成拓扑图</span>
-          </div>
-        </div>
-      </div>
     </v-card-text>
     
+    <v-divider class="mx-4 border-opacity-10"></v-divider>
+    
     <!-- 卡片操作 -->
-    <v-card-actions class="pt-0">
-      <v-btn
-        variant="outlined"
-        size="small"
-        prepend-icon="mdi-pencil"
-        @click.stop="$emit('view', project)"
-      >
-        编辑
-      </v-btn>
-      <v-btn
-        variant="outlined"
-        size="small"
-        prepend-icon="mdi-content-copy"
-        @click.stop="$emit('duplicate', project)"
-      >
-        复制
-      </v-btn>
-      <v-btn
-        variant="outlined"
-        size="small"
-        prepend-icon="mdi-delete"
-        @click.stop="$emit('delete', project)"
-      >
-        删除
-      </v-btn>
-      
+    <v-card-actions class="px-4 py-3 action-bar">
+      <div class="d-flex w-100 justify-space-between align-center">
+        <div class="d-flex gap-2">
+           <v-btn
+            variant="text"
+            size="small"
+            color="primary"
+            class="action-btn px-2"
+            @click.stop="$emit('view', project)"
+            prepend-icon="mdi-pencil-outline"
+          >
+            编辑
+          </v-btn>
+          
+           <v-menu location="bottom end">
+             <template v-slot:activator="{ props }">
+               <v-btn
+                 icon="mdi-dots-horizontal"
+                 variant="text"
+                 size="small"
+                 color="grey"
+                 v-bind="props"
+                 @click.stop
+               ></v-btn>
+             </template>
+             <v-list density="compact" class="card-glass py-0">
+               <v-list-item
+                 prepend-icon="mdi-content-copy"
+                 title="复制项目"
+                 @click="$emit('duplicate', project)"
+                 class="item-hover"
+               />
+               <v-list-item
+                 prepend-icon="mdi-delete-outline"
+                 title="移入回收站"
+                 class="text-error item-hover"
+                 @click="$emit('delete', project)"
+               />
+             </v-list>
+           </v-menu>
+        </div>
 
-      <v-spacer />
-      
-      <!-- 项目状态标签 -->
-      <v-chip
-        :color="statusColor"
-        variant="flat"
-        size="small"
-        class="text-caption"
-      >
-        {{ statusText }}
-      </v-chip>
+        <v-chip
+          :color="statusColor"
+          variant="text"
+          size="x-small"
+          class="text-caption font-weight-bold"
+        >
+          <v-icon start size="8" icon="mdi-circle" class="mr-1"></v-icon>
+          {{ statusText }}
+        </v-chip>
+      </div>
     </v-card-actions>
   </v-card>
 </template>
@@ -255,11 +225,11 @@ const versionStatusIcon = computed(() => {
     case 'draft':
       return 'mdi-file-document-outline'
     case 'parsed':
-      return 'mdi-cog'
+      return 'mdi-cog-outline'
     case 'generated':
-      return 'mdi-check-circle'
+      return 'mdi-check-circle-outline'
     case 'published':
-      return 'mdi-publish'
+      return 'mdi-rocket-launch-outline'
     default:
       return 'mdi-help'
   }
@@ -278,7 +248,7 @@ const versionStatusText = computed(() => {
     case 'published':
       return '已发布'
     default:
-      return '未知状态'
+      return '未知'
   }
 })
 
@@ -295,127 +265,105 @@ const formatDate = (dateString: string) => {
     return '昨天'
   } else if (diffDays <= 7) {
     return `${diffDays - 1} 天前`
-  } else if (diffDays <= 30) {
-    return `${Math.floor(diffDays / 7)} 周前`
-  } else if (diffDays <= 365) {
-    return `${Math.floor(diffDays / 30)} 个月前`
   } else {
-    return date.toLocaleDateString('zh-CN')
+    return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })
   }
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .project-card {
   position: relative;
-  border-radius: 12px !important;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   cursor: pointer;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  overflow: hidden;
 }
 
 .project-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+  transform: translateY(-5px);
+  border-color: rgba(0, 240, 255, 0.5) !important;
+  box-shadow: 0 10px 30px -10px rgba(0, 240, 255, 0.3) !important;
+
+  .selection-checkbox {
+    opacity: 1;
+  }
+  
+  .status-indicator {
+    box-shadow: 0 0 10px currentColor;
+  }
 }
 
 .project-card.selected {
-  border: 2px solid #1976d2;
-  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
+  border: 1px solid #00F0FF !important;
+  background: rgba(0, 240, 255, 0.05) !important;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.2) !important;
+  
+  .status-indicator {
+    width: 6px;
+    box-shadow: 0 0 15px currentColor;
+  }
 }
 
 .selection-checkbox {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 10px;
+  right: 10px;
   z-index: 2;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 4px;
-  padding: 2px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  
+  &.show {
+    opacity: 1;
+  }
 }
 
 .status-indicator {
   position: absolute;
-  top: 0;
+  top: 15%;
   left: 0;
-  width: 4px;
-  height: 100%;
-  border-radius: 12px 0 0 12px;
+  width: 3px;
+  height: 70%;
+  border-radius: 0 4px 4px 0;
+  transition: all 0.3s ease;
 }
 
-.status-active {
-  background: linear-gradient(135deg, #4CAF50, #66BB6A);
+.status-active { background-color: #00FF9D; color: #00FF9D; }
+.status-archived { background-color: #FFD600; color: #FFD600; }
+.status-deleted { background-color: #FF2E2E; color: #FF2E2E; }
+
+.description-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  height: 40px; 
 }
 
-.status-archived {
-  background: linear-gradient(135deg, #FF9800, #FFB74D);
+.glass-chip {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: #fff !important;
 }
 
-.status-deleted {
-  background: linear-gradient(135deg, #F44336, #EF5350);
+.action-btn {
+  text-transform: none;
+  letter-spacing: 0;
+  
+  &:hover {
+    background: rgba(0, 240, 255, 0.1);
+    color: #00F0FF !important;
+  }
 }
 
-.latest-version-info {
-  background: rgba(0, 0, 0, 0.02);
-  border-radius: 6px;
-  padding: 10px;
-  margin-top: 8px;
-}
-
-.version-info-row {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  width: 100%;
-}
-
-.version-info-row .d-flex {
-  align-items: center;
-  flex-wrap: nowrap;
-  white-space: nowrap;
-}
-
-.version-text {
-  font-weight: 500;
-  color: rgba(0, 0, 0, 0.87);
-}
-
-.date-text {
-  color: rgba(0, 0, 0, 0.6);
-  font-size: 0.75rem;
-}
-
-.version-status-row {
-  margin-top: 4px;
-}
-
-.version-chip,
-.status-chip {
-  height: 24px !important;
-  font-size: 0.75rem !important;
+.item-hover:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: #fff !important;
+  
+  :deep(.v-icon) {
+    color: #fff !important;
+  }
 }
 
 .gap-2 {
   gap: 8px;
-}
-
-.v-card-title {
-  padding: 16px 16px 8px 20px !important;
-}
-
-.v-card-text {
-  padding: 0 16px 8px 20px !important;
-}
-
-.v-card-actions {
-  padding: 8px 16px 16px 20px !important;
-}
-
-.v-chip {
-  border-radius: 6px !important;
-}
-
-.v-btn {
-  border-radius: 6px !important;
 }
 </style>

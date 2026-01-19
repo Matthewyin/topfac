@@ -33,101 +33,167 @@ $spacers: (
   12: 48px,
   16: 64px,
   20: 80px,
-  24: 96px
+  24: 96px,
+  32: 128px
 );
 
-// 字体大小
+// 字体系统
+$font-family-base: 'Inter', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
 $font-sizes: (
-  xs: 0.75rem,    // 12px
-  sm: 0.875rem,   // 14px
-  base: 1rem,     // 16px
-  lg: 1.125rem,   // 18px
-  xl: 1.25rem,    // 20px
-  2xl: 1.5rem,    // 24px
-  3xl: 1.875rem,  // 30px
-  4xl: 2.25rem,   // 36px
-  5xl: 3rem       // 48px
+  xs: 0.75rem,    
+  sm: 0.875rem,   
+  base: 1rem,     
+  lg: 1.125rem,   
+  xl: 1.25rem,    
+  2xl: 1.5rem,    
+  3xl: 1.875rem,  
+  4xl: 2.25rem,   
+  5xl: 3rem,
+  6xl: 3.75rem
 );
 
-// 阴影系统
+// 赛博琉璃 (Cyber Glass) 颜色系统
+$colors: (
+  // 基础色
+  background: #0B0F19,  // Deep Void
+  surface: rgba(30, 41, 59, 0.4), // Glass Surface
+  
+  // 强调色
+  primary: #00F0FF,     // Neon Cyan
+  secondary: #7000FF,   // Electric Purple
+  accent: #FF0055,      // Cyber Pink
+  
+  // 状态色
+  success: #00FF9D,
+  info: #00C8FF,
+  warning: #FFD600,
+  error: #FF2E2E,
+  
+  // 文本色
+  text-primary: #FFFFFF,
+  text-secondary: rgba(255, 255, 255, 0.7),
+  text-disabled: rgba(255, 255, 255, 0.38),
+  
+  // 兼容旧变量 ensure backward compatibility
+  on-surface: #FFFFFF,
+  on-background: #FFFFFF
+);
+
+// 渐变定义
+$gradients: (
+  primary: linear-gradient(135deg, #00F0FF 0%, #0088FF 100%),
+  secondary: linear-gradient(135deg, #7000FF 0%, #A000FF 100%),
+  cyber: linear-gradient(135deg, #00F0FF 0%, #7000FF 100%),
+  glass: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%)
+);
+
+// 阴影系统 (增加了 Glow 效果)
 $shadows: (
-  sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05),
-  base: (0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)),
-  md: (0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)),
-  lg: (0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)),
-  xl: (0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)),
-  2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25)
+  sm: 0 2px 4px rgba(0, 0, 0, 0.2),
+  base: 0 4px 6px -1px rgba(0, 0, 0, 0.3),
+  md: 0 10px 15px -3px rgba(0, 0, 0, 0.4),
+  lg: 0 20px 25px -5px rgba(0, 0, 0, 0.5),
+  xl: 0 25px 50px -12px rgba(0, 0, 0, 0.6), // Added for compatibility
+  2xl: 0 35px 60px -15px rgba(0, 0, 0, 0.7), // Added for compatibility
+  glow-primary: 0 0 15px rgba(0, 240, 255, 0.5),
+  glow-secondary: 0 0 15px rgba(112, 0, 255, 0.5)
 );
 
 // 圆角系统
 $border-radius: (
   none: 0,
-  sm: 0.125rem,   // 2px
-  base: 0.25rem,  // 4px
-  md: 0.375rem,   // 6px
-  lg: 0.5rem,     // 8px
-  xl: 0.75rem,    // 12px
-  2xl: 1rem,      // 16px
-  3xl: 1.5rem,    // 24px
+  sm: 4px,
+  base: 8px,
+  md: 12px,
+  lg: 16px,
+  xl: 24px,
+  2xl: 32px, // Added for compatibility
+  3xl: 48px, // Added for compatibility
   full: 9999px
-);
-
-// 颜色系统
-$colors: (
-  primary: #1976d2,
-  secondary: #424242,
-  success: #4CAF50,
-  info: #2196F3,
-  warning: #FF9800,
-  error: #F44336,
-  surface: #FFFFFF,
-  background: #F5F5F5,
-  on-surface: #212121,
-  on-background: #212121
 );
 
 @use 'sass:map';
 
-// 响应式混合器
+// =============================================
+// Mixins (混合器)
+// =============================================
+
+// 玻璃拟态 (Glassmorphism) 核心
+@mixin glass($opacity: 0.1, $blur: 12px) {
+  background: rgba(255, 255, 255, $opacity);
+  backdrop-filter: blur($blur);
+  -webkit-backdrop-filter: blur($blur);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+
+// 深色玻璃 (用于深色背景上的卡片)
+@mixin glass-dark($opacity: 0.4) {
+  background: rgba(13, 19, 31, $opacity);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+// 霓虹文字 (Neon Text)
+@mixin text-neon($color: #00F0FF) {
+  color: $color;
+  text-shadow: 0 0 5px rgba($color, 0.5), 0 0 10px rgba($color, 0.3);
+}
+
+// 渐变文字
+@mixin text-gradient($gradient) {
+  background: $gradient;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+// 响应式工具
 @mixin respond-to($breakpoint) {
   @if map.has-key($grid-breakpoints, $breakpoint) {
     @media (min-width: map.get($grid-breakpoints, $breakpoint)) {
       @content;
     }
-  } @else {
-    @warn "Unfortunately, no value could be retrieved from `#{$breakpoint}`. "
-        + "Available breakpoints are: #{map.keys($grid-breakpoints)}.";
   }
 }
 
-// 容器混合器
+// 容器
 @mixin container() {
   width: 100%;
   margin-left: auto;
   margin-right: auto;
-  padding-left: 16px;
-  padding-right: 16px;
+  padding-left: 20px;
+  padding-right: 20px;
 
-  @include respond-to(sm) {
-    max-width: map.get($container-max-widths, sm);
-  }
-
-  @include respond-to(md) {
-    max-width: map.get($container-max-widths, md);
-  }
-
-  @include respond-to(lg) {
-    max-width: map.get($container-max-widths, lg);
-  }
-
-  @include respond-to(xl) {
-    max-width: map.get($container-max-widths, xl);
-  }
-
-  @include respond-to(xxl) {
-    max-width: map.get($container-max-widths, xxl);
+  @each $breakpoint, $width in $container-max-widths {
+    @include respond-to($breakpoint) {
+      max-width: $width;
+    }
   }
 }
+
+// 悬浮效果
+@mixin hover-lift() {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px -8px rgba(0, 0, 0, 0.5);
+  }
+}
+
+// 辉光悬浮
+@mixin hover-glow($color: #00F0FF) {
+  transition: all 0.3s ease;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 20px rgba($color, 0.4);
+    border-color: rgba($color, 0.5);
+  }
+}
+
+// LEGACY MIXINS - Restored for compatibility
 
 // 网格系统混合器
 @mixin make-col($size, $columns: 12) {
@@ -150,7 +216,7 @@ $colors: (
   overflow: hidden;
 }
 
-// 卡片阴影混合器
+// 卡片阴影混合器 (Updated to use new map)
 @mixin card-shadow($level: base) {
   box-shadow: map.get($shadows, $level);
   transition: box-shadow 0.3s ease;
@@ -166,4 +232,4 @@ $colors: (
       box-shadow: map.get($shadows, xl);
     }
   }
-} 
+}

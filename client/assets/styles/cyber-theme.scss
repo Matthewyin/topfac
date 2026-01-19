@@ -1,0 +1,218 @@
+/* 赛博琉璃 (Cyber Glass) dynamic theme system */
+
+:root {
+  /* Default Dark Mode (Cyber Glass) */
+  --bg-primary: #0B0F19;
+  --bg-gradient-1: rgba(112, 0, 255, 0.08);
+  --bg-gradient-2: rgba(0, 240, 255, 0.08);
+  --grid-color: rgba(255, 255, 255, 0.03);
+  
+  --glass-surface: rgba(30, 41, 59, 0.3);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-blur: 12px;
+  
+  --card-hover-border: rgba(0, 240, 255, 0.3);
+  --card-hover-shadow: rgba(0, 240, 255, 0.15);
+  
+  --text-primary: #FFFFFF;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-neon: #00F0FF;
+  
+  --sidebar-bg: rgba(13, 19, 31, 0.7);
+  --appbar-bg: rgba(11, 15, 25, 0.7);
+
+  --scrollbar-track: #0B0F19;
+  --scrollbar-thumb: rgba(255, 255, 255, 0.2);
+  --scrollbar-thumb-hover: rgba(0, 240, 255, 0.5);
+}
+
+[data-theme='light'] {
+  /* Light Mode (Crystal Glass) */
+  --bg-primary: #F3F4F6; /* Cool Gray */
+  --bg-gradient-1: rgba(112, 0, 255, 0.03);
+  --bg-gradient-2: rgba(0, 100, 255, 0.05); /* Blueish */
+  --grid-color: rgba(0, 0, 0, 0.03);
+  
+  --glass-surface: rgba(255, 255, 255, 0.65); /* More opaque white glass */
+  --glass-border: rgba(0, 0, 0, 0.06);
+  --glass-blur: 16px;
+  
+  --card-hover-border: rgba(0, 102, 255, 0.4);
+  --card-hover-shadow: rgba(0, 102, 255, 0.1);
+  
+  --text-primary: #1E293B; /* Slate 800 */
+  --text-secondary: #64748B; /* Slate 500 */
+  --text-neon: #0066FF; /* Vivid Blue */
+  
+  --sidebar-bg: rgba(255, 255, 255, 0.7);
+  --appbar-bg: rgba(255, 255, 255, 0.7);
+
+  --scrollbar-track: #F3F4F6;
+  --scrollbar-thumb: rgba(0, 0, 0, 0.2);
+  --scrollbar-thumb-hover: rgba(0, 102, 255, 0.5);
+}
+
+/* 1. 动态背景系统 */
+body {
+  background-color: var(--bg-primary);
+  background-image: 
+    radial-gradient(circle at 15% 50%, var(--bg-gradient-1), transparent 25%),
+    radial-gradient(circle at 85% 30%, var(--bg-gradient-2), transparent 25%);
+  background-attachment: fixed;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+  color: var(--text-primary);
+  transition: background-color 0.5s ease, color 0.3s ease;
+}
+
+/* 添加网格背景层 */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    linear-gradient(var(--grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+  background-size: 50px 50px;
+  pointer-events: none;
+  z-index: -1;
+  transition: background-image 0.5s ease;
+}
+
+/* 2. 滚动条美化 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track); 
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb); 
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover); 
+}
+
+/* 3. Vuetify 组件样式深度覆盖 */
+
+// 透明应用栏
+.v-app-bar.v-toolbar {
+  background: var(--appbar-bg) !important;
+  backdrop-filter: blur(10px) !important;
+  border-bottom: 1px solid var(--glass-border) !important;
+  box-shadow: none !important;
+}
+
+// 侧边栏玻璃化
+.v-navigation-drawer {
+  background: var(--sidebar-bg) !important;
+  backdrop-filter: blur(16px) !important;
+  border-right: 1px solid var(--glass-border) !important;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+}
+
+// 列表项悬浮与激活
+.v-list-item--nav {
+  transition: all 0.3s ease;
+  border-radius: 8px !important;
+  margin-bottom: 4px !important;
+}
+
+.v-list-item--nav:hover {
+    background: rgba(125,125,125, 0.05);
+}
+
+.v-list-item--active {
+  background: linear-gradient(90deg, rgba(0, 240, 255, 0.1), transparent) !important;
+  border-left: 3px solid var(--text-neon) !important;
+}
+[data-theme='light'] .v-list-item--active {
+    background: linear-gradient(90deg, rgba(0, 102, 255, 0.1), transparent) !important;
+}
+
+.v-list-item--active .v-list-item-title {
+  color: var(--text-neon) !important;
+  font-weight: 600 !important;
+}
+
+.v-list-item__prepend > .v-icon {
+  opacity: 0.8;
+  color: var(--text-secondary);
+}
+
+.v-list-item--active .v-list-item__prepend > .v-icon {
+  color: var(--text-neon) !important;
+  opacity: 1;
+}
+
+/* 4. 通用工具类 (Helpers) */
+
+// 霓虹文字
+.text-neon-cyan {
+  color: var(--text-neon) !important;
+}
+// Light mode glow effect is subtler or different
+[data-theme='dark'] .text-neon-cyan {
+    text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
+}
+
+.text-neon-purple {
+  color: #7000FF !important;
+  text-shadow: 0 0 8px rgba(112, 0, 255, 0.6);
+}
+
+// 渐变文字
+.text-gradient-cyber {
+  background: linear-gradient(to right, #00F0FF, #7000FF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+[data-theme='light'] .text-gradient-cyber {
+    background: linear-gradient(to right, #0066FF, #7000FF);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+
+// 玻璃卡片基类
+.card-glass {
+  background: var(--glass-surface) !important;
+  backdrop-filter: blur(var(--glass-blur)) !important;
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05) !important;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  color: var(--text-primary) !important;
+}
+
+.card-glass:hover {
+  transform: translateY(-5px);
+  border-color: var(--card-hover-border) !important;
+  box-shadow: 0 15px 40px -5px var(--card-hover-shadow) !important;
+}
+
+// 文本颜色适配
+h1, h2, h3, h4, h5, h6 {
+    color: var(--text-primary);
+}
+/* Default color inherited from body */
+.text-white {
+    color: var(--text-primary) !important; /* Force override for logical white vs dark text */
+}
+.text-grey {
+    color: var(--text-secondary) !important;
+}
+.text-grey-lighten-1 {
+    color: var(--text-secondary) !important;
+}
+.text-grey-darken-1 {
+    color: var(--text-secondary) !important; /* Adjustment might be needed */
+}
