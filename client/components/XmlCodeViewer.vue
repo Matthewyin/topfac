@@ -228,7 +228,9 @@ onUnmounted(() => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use '~/assets/styles/variables.scss' as *;
+
 .xml-code-viewer {
   height: 100%;
   display: flex;
@@ -257,8 +259,8 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 16px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
-  background: #fafafa;
+  border-bottom: 1px solid var(--glass-border);
+  background: transparent;
   flex-shrink: 0;
 }
 
@@ -273,8 +275,8 @@ onUnmounted(() => {
 
 .code-header {
   padding: 8px 16px;
-  background: #f5f5f5;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--glass-border);
   flex-shrink: 0;
 }
 
@@ -282,14 +284,14 @@ onUnmounted(() => {
   flex: 1;
   overflow: auto;
   position: relative;
-  background: #fafafa;
+  background: rgba(255, 255, 255, 0.02);
   /* 设置最大高度，确保容器内滚动 */
   max-height: calc(100vh - 300px);
   min-height: 400px;
 }
 
 .code-container.fullscreen {
-  background: white;
+  background: var(--bg-primary);
   z-index: 9999;
   max-height: 100vh;
   min-height: 100vh;
@@ -297,8 +299,8 @@ onUnmounted(() => {
 
 .code-actions {
   padding: 12px 16px;
-  background: #f8f9fa;
-  border-top: 1px solid rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  border-top: 1px solid var(--glass-border);
   display: flex;
   justify-content: center;
 }
@@ -313,19 +315,19 @@ onUnmounted(() => {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 14px;
   line-height: 1.6;
-  background: white;
+  background: transparent;
   border: none;
   white-space: pre-wrap;
   word-break: break-word;
   /* 移除 min-height: 100%，避免撑开容器 */
-  color: #2d3748;
+  color: var(--text-primary);
   /* 确保文本区域有明确的边界 */
   border-radius: 4px;
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .xml-info {
-  border-top: 1px solid rgba(0, 0, 0, 0.12);
+  border-top: 1px solid var(--glass-border);
 }
 
 .info-item {

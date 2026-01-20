@@ -594,7 +594,9 @@ const copyToClipboard = async () => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use '~/assets/styles/variables.scss' as *;
+
 .parsed-data-viewer {
   height: 100%;
   display: flex;
@@ -622,8 +624,8 @@ const copyToClipboard = async () => {
 
 .data-header {
   flex-shrink: 0;
-  background: #fafafa;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  background: transparent;
+  border-bottom: 1px solid var(--glass-border);
 }
 
 .data-tabs-content {
@@ -642,12 +644,12 @@ const copyToClipboard = async () => {
   min-height: 400px;
   /* 确保容器有明确的边界和适当的内边距 */
   padding: 16px;
-  background: white;
+  background: rgba(255, 255, 255, 0.02);
   border-radius: 4px;
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
   /* 确保滚动条样式一致 */
   scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
 }
 
 /* WebKit浏览器的滚动条样式 */
@@ -660,12 +662,12 @@ const copyToClipboard = async () => {
 }
 
 .tab-content-container::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.3);
+  background-color: rgba(255, 255, 255, 0.2);
   border-radius: 4px;
 }
 
 .tab-content-container::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(255, 255, 255, 0.3);
 }
 
 .data-overview .v-card {
@@ -673,20 +675,20 @@ const copyToClipboard = async () => {
 }
 
 .connection-flow {
-  background: #f8f9fa;
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 8px;
   padding: 12px;
 }
 
 .attributes-text {
-  background: #f8f9fa;
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 6px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--glass-border);
   max-height: 200px;
   overflow: auto;
   /* 确保滚动条样式与其他容器一致 */
   scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
 }
 
 /* 属性文本容器的滚动条样式 */
@@ -699,12 +701,12 @@ const copyToClipboard = async () => {
 }
 
 .attributes-text::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.3);
+  background-color: rgba(255, 255, 255, 0.2);
   border-radius: 4px;
 }
 
 .attributes-text::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(255, 255, 255, 0.3);
 }
 
 .text-content {
@@ -715,30 +717,30 @@ const copyToClipboard = async () => {
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
-  color: #2d3748;
+  color: var(--text-primary);
   background: transparent;
 }
 
 .ip-text {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 14px;
-  color: #2d3748;
-  background: #f8f9fa;
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
   padding: 4px 8px;
   border-radius: 4px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--glass-border);
 }
 
 .raw-json-text {
-  background: #f8f9fa;
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 6px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--glass-border);
   /* 移除固定高度，让父容器控制滚动 */
   height: calc(100% - 32px);
   overflow: auto;
   /* 确保滚动条样式与其他选项卡一致 */
   scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
 }
 
 /* 原始数据JSON容器的滚动条样式 */
@@ -751,12 +753,12 @@ const copyToClipboard = async () => {
 }
 
 .raw-json-text::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.3);
+  background-color: rgba(255, 255, 255, 0.2);
   border-radius: 4px;
 }
 
 .raw-json-text::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(255, 255, 255, 0.3);
 }
 
 .json-content {
@@ -767,7 +769,7 @@ const copyToClipboard = async () => {
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
-  color: #2d3748;
+  color: var(--text-primary);
   background: transparent;
 }
 

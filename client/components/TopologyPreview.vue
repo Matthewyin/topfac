@@ -540,7 +540,9 @@ onUnmounted(() => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use '~/assets/styles/variables.scss' as *;
+
 .topology-preview {
   height: 100%;
   display: flex;
@@ -561,8 +563,8 @@ onUnmounted(() => {
 .workflow-header-section {
   flex-shrink: 0;
   padding: 16px 16px 0 16px;
-  background: #fafafa;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  background: transparent;
+  border-bottom: 1px solid var(--glass-border);
 }
 
 .preview-content-container {
@@ -573,12 +575,12 @@ onUnmounted(() => {
   min-height: 400px;
   /* 确保容器有明确的边界和适当的内边距 */
   padding: 16px;
-  background: white;
+  background: rgba(255, 255, 255, 0.02);
   border-radius: 4px;
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
   /* 确保滚动条样式一致 */
   scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
 }
 
 /* WebKit浏览器的滚动条样式 */
@@ -591,12 +593,12 @@ onUnmounted(() => {
 }
 
 .preview-content-container::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.3);
+  background-color: rgba(255, 255, 255, 0.2);
   border-radius: 4px;
 }
 
 .preview-content-container::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(255, 255, 255, 0.3);
 }
 
 .preview-empty {
@@ -650,8 +652,8 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
-  background: #e0e0e0;
-  color: #757575;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
   font-weight: bold;
   font-size: 12px;
   margin: 0 auto;
@@ -719,9 +721,10 @@ onUnmounted(() => {
 .step-hover-info {
   margin: 16px 0;
   padding: 16px;
-  border: 2px solid #2196f3;
+  border: 1px solid var(--glass-border);
   border-radius: 8px;
-  background: #f8f9fa;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
   min-height: 120px;
 }
 
@@ -734,7 +737,7 @@ onUnmounted(() => {
   align-items: center;
   margin-bottom: 12px;
   padding-bottom: 8px;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--glass-border);
 }
 
 .hover-info-content {
@@ -747,7 +750,7 @@ onUnmounted(() => {
 }
 
 .step-data-content {
-  background: #f5f5f5;
+  background: rgba(0, 0, 0, 0.3);
   padding: 8px;
   border-radius: 4px;
   font-size: 12px;
@@ -755,6 +758,8 @@ onUnmounted(() => {
   overflow-y: auto;
   white-space: pre-wrap;
   word-break: break-all;
+  color: var(--text-primary);
+  border: 1px solid var(--glass-border);
 }
 
 /* 连接线样式 */
@@ -764,7 +769,7 @@ onUnmounted(() => {
   left: 36px;
   right: -36px;
   height: 2px;
-  background: #e0e0e0;
+  background: rgba(255, 255, 255, 0.1);
   transform: translateY(-50%);
   z-index: 1;
 }
@@ -779,7 +784,7 @@ onUnmounted(() => {
 }
 
 .step-connector.connector-pending {
-  background: #e0e0e0;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .step-content-horizontal {
@@ -793,13 +798,13 @@ onUnmounted(() => {
   font-size: 14px;
   font-weight: 600;
   margin: 0 0 4px 0;
-  color: rgba(0, 0, 0, 0.87);
+  color: var(--text-primary);
 }
 
 .step-description-horizontal {
   font-size: 12px;
   margin: 0;
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--text-secondary);
   line-height: 1.3;
 }
 
@@ -812,7 +817,7 @@ onUnmounted(() => {
 }
 
 .gemini-interaction-horizontal {
-  background: #f8f9fa;
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 8px;
 }
 
@@ -826,7 +831,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   font-size: 12px;
-  color: #616161;
+  color: var(--text-secondary);
 }
 
 .interaction-text-horizontal {

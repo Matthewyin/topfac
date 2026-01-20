@@ -560,7 +560,9 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use '~/assets/styles/variables.scss' as *;
+
 .version-history {
   height: 100%;
   display: flex;
@@ -572,8 +574,8 @@ onMounted(() => {
 .version-header {
   flex-shrink: 0;
   padding: 16px;
-  background: #fafafa;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  background: transparent;
+  border-bottom: 1px solid var(--glass-border);
 }
 
 .versions-list {
@@ -602,26 +604,27 @@ onMounted(() => {
   cursor: pointer;
   height: 100%;
   /* 确保卡片有明确的边界和适当的间距 */
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  background: white;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.02);
   /* 确保卡片在网格中高度一致 */
   display: flex;
   flex-direction: column;
 }
 
 .version-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  box-shadow: 0 4px 12px rgba(0, 240, 255, 0.1) !important;
   transform: translateY(-2px);
+  border-color: #00F0FF !important;
 }
 
 .version-card.current-version {
-  border-color: #1976D2 !important;
-  background: rgba(25, 118, 210, 0.02);
-  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.2);
+  border-color: #00F0FF !important;
+  background: rgba(0, 240, 255, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 240, 255, 0.2);
 }
 
 .version-stats {
-  background: rgba(0, 0, 0, 0.02);
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 8px;
   padding: 12px;
 }
@@ -631,7 +634,7 @@ onMounted(() => {
 }
 
 .change-summary {
-  background: rgba(0, 0, 0, 0.02);
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 6px;
   padding: 8px;
 }
@@ -666,7 +669,7 @@ onMounted(() => {
 }
 
 .parsed-preview {
-  background: rgba(0, 0, 0, 0.02);
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 6px;
   padding: 8px;
 }

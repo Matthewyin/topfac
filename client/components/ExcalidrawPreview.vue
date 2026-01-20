@@ -237,7 +237,9 @@ onBeforeUnmount(() => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use '~/assets/styles/variables.scss' as *;
+
 .excalidraw-preview {
   height: 100%;
   display: flex;
@@ -248,15 +250,15 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  border-bottom: 1px solid rgba(0,0,0,0.12);
-  background: #fafafa;
+  border-bottom: 1px solid var(--glass-border);
+  background: transparent;
   flex-shrink: 0;
 }
 .content {
   flex: 1;
   min-height: 0;
   overflow: hidden;
-  background: white;
+  background: rgba(255, 255, 255, 0.02);
 }
 .center {
   height: 100%;
@@ -264,7 +266,7 @@ onBeforeUnmount(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: rgba(0,0,0,0.54);
+  color: var(--text-secondary);
 }
 .viewer-container {
   height: 100%;

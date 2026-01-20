@@ -110,7 +110,7 @@ const renderMermaid = async () => {
   try {
     const mod: any = await import('mermaid')
     const mermaid = mod.default || mod
-    mermaid.initialize({ startOnLoad: false, securityLevel: 'loose' })
+    mermaid.initialize({ startOnLoad: false, securityLevel: 'loose', theme: 'dark' })
     const id = 'mermaid-' + Date.now()
     const { svg } = await mermaid.render(id, mermaidText.value)
     svgHtml.value = svg
@@ -175,7 +175,9 @@ watch(direction, async () => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use '~/assets/styles/variables.scss' as *;
+
 .mermaid-preview {
   height: 100%;
   display: flex;
@@ -186,15 +188,15 @@ watch(direction, async () => {
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  border-bottom: 1px solid rgba(0,0,0,0.12);
-  background: #fafafa;
+  border-bottom: 1px solid var(--glass-border);
+  background: transparent;
   flex-shrink: 0;
 }
 .content {
   flex: 1;
   min-height: 0;
   overflow: auto;
-  background: white;
+  background: rgba(255, 255, 255, 0.02);
 }
 .center {
   height: 100%;
@@ -202,7 +204,7 @@ watch(direction, async () => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: rgba(0,0,0,0.54);
+  color: var(--text-secondary);
 }
 .svg-container {
   padding: 16px;
@@ -210,6 +212,7 @@ watch(direction, async () => {
 .svg-container :deep(svg) {
   width: 100% !important;
   height: auto !important;
+  background: transparent !important;
 }
 </style>
 

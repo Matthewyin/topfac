@@ -137,8 +137,8 @@ cd ..
 npm run dev
 
 # 5. 访问应用
-# 前端: http://localhost:3000
-# 后端: http://localhost:30010
+# 前端: http://localhost:30100
+# 后端 API: http://localhost:3000
 ```
 
 **环境变量配置（可选）：**
@@ -147,18 +147,41 @@ TopFac使用环境变量管理敏感配置（如Google Analytics ID）。详见[
 
 主要环境变量：
 - `NUXT_PUBLIC_GOOGLE_ANALYTICS_ID` - Google Analytics 4 衡量ID
-- `TOPOLOGY_API_URL` - API基础URL（开发环境：`http://localhost:30010`）
+- `TOPOLOGY_API_URL` - API基础URL（生产环境留空使用相对路径）
 - `NODE_ENV` - 运行环境（`development` | `production`）
+
+### 前端构建与部署
+
+⚠️ **重要**：由于项目使用 `ssr: false` (SPA模式)，必须使用 `npm run generate` 而不是 `npm run build`。
+
+```bash
+# 1. 停止开发服务器（如果正在运行）
+pkill -f "nuxt dev"
+
+# 2. 生成静态文件（必须使用 generate，不是 build！）
+cd client
+npm run generate
+
+# 3. 复制构建产物到 dist 目录
+cd ..
+rm -rf dist && cp -r client/.output/public dist
+
+# 4. 同步到服务器（使用 --delete 确保清理旧文件）
+rsync -avz --delete dist/ root@<服务器IP>:/opt/topfac/dist/
+
+# 5. 重启服务
+ssh root@<服务器IP> "systemctl restart topfac"
+```
 
 ### 生产部署（完整流程）
 
 #### 使用自动化部署脚本
 
-项目提供了自动化部署脚本 `deploy-to-new-server.sh`，可一键部署到新服务器
+项目提供了自动化部署脚本 `deploy-to-new-server.sh`，可一键部署到新服务器：
 
-# 使用方法
+```bash
 ./deploy-to-new-server.sh <服务器IP>
-
+```
 
 脚本会自动完成：
 1. ✅ 安装OpenResty和Node.js

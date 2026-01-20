@@ -52,8 +52,8 @@
           <!-- 项目图标和信息 -->
           <v-icon class="mr-2" color="primary">mdi-sitemap</v-icon>
           <div>
-            <div class="text-h6 font-weight-bold text-white">{{ project.project_name }}</div>
-            <div class="text-caption text-grey">
+            <div class="text-h6 font-weight-bold text-primary">{{ project.project_name }}</div>
+            <div class="text-caption text-secondary">
               当前版本：v{{ currentVersion?.version || 0 }}
               <span v-if="currentVersion?.status" class="mx-1">•</span>
               <span v-if="currentVersion?.status">{{ getVersionStatusText(currentVersion.status as VersionStatus) }}</span>
@@ -707,12 +707,15 @@ watch(textContent, (newValue, oldValue) => {
 });
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use '~/assets/styles/variables.scss' as *;
+
 .topology-editor {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #fafafa;
+  background: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 .editor-container {
@@ -723,12 +726,14 @@ watch(textContent, (newValue, oldValue) => {
 
 .editor-toolbar {
   flex-shrink: 0;
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--glass-border) !important;
 }
 
 .editor-content {
   flex: 1;
   overflow: hidden;
-  background: #fafafa;
+  background: transparent;
 }
 
 .editor-panel,
@@ -736,8 +741,8 @@ watch(textContent, (newValue, oldValue) => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid rgba(0, 0, 0, 0.12);
-  background: #fafafa;
+  border-right: 1px solid var(--glass-border);
+  background: transparent;
 }
 
 .preview-panel {
@@ -749,8 +754,8 @@ watch(textContent, (newValue, oldValue) => {
   justify-content: space-between;
   align-items: center;
   padding: 16px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
-  background: #fafafa;
+  border-bottom: 1px solid var(--glass-border);
+  background: rgba(var(--bg-primary-rgb), 0.5);
   min-height: 64px;
   flex-shrink: 0;
 }
@@ -758,14 +763,14 @@ watch(textContent, (newValue, oldValue) => {
 .panel-header h3 {
   font-size: 1.25rem;
   font-weight: 600;
-  color: rgba(0, 0, 0, 0.87);
+  color: var(--text-primary);
   margin: 0;
 }
 
 .ai-panel {
   padding: 16px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
-  background: #f8f9fa;
+  border-bottom: 1px solid var(--glass-border);
+  background: rgba(0, 0, 0, 0.2);
 }
 
 .text-editor {
@@ -781,36 +786,38 @@ watch(textContent, (newValue, oldValue) => {
   font-family: 'Courier New', monospace;
   font-size: 14px;
   line-height: 1.5;
+  color: var(--text-primary);
 }
 
 .validation-result {
-  border-top: 1px solid rgba(0, 0, 0, 0.12);
+  border-top: 1px solid var(--glass-border);
 }
 
 .preview-tabs {
   flex-shrink: 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
-  background: white;
+  border-bottom: 1px solid var(--glass-border);
+  background: rgba(0, 0, 0, 0.2);
 }
 
 .preview-tabs :deep(.v-tab) {
   font-size: 14px;
   font-weight: 500;
-  color: rgba(0, 0, 0, 0.87);
+  color: var(--text-secondary);
   text-transform: none;
   letter-spacing: normal;
   min-height: 48px;
 }
 
 .preview-tabs :deep(.v-tab--selected) {
-  color: rgb(25, 118, 210);
+  color: #00F0FF;
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.5);
 }
 
 /* 确保左侧按钮与右侧标签页字体一致 */
 .panel-header .v-btn {
   font-size: 14px;
   font-weight: 500;
-  color: rgba(0, 0, 0, 0.87);
+  color: var(--text-secondary);
   text-transform: none;
   letter-spacing: normal;
 }
@@ -835,10 +842,6 @@ watch(textContent, (newValue, oldValue) => {
 }
 
 /* 工具栏样式 */
-.editor-toolbar {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.12) !important;
-}
-
 .editor-toolbar .v-toolbar__content {
   padding: 0 !important;
   height: 64px !important;
@@ -865,7 +868,8 @@ watch(textContent, (newValue, oldValue) => {
   border-radius: 50% !important;
   width: 48px !important;
   height: 48px !important;
-  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.3) !important;
+  background: linear-gradient(135deg, #00F0FF 0%, #0088FF 100%);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.3) !important;
   transition: all 0.3s ease !important;
   align-self: center !important;
   display: flex !important;
@@ -874,7 +878,7 @@ watch(textContent, (newValue, oldValue) => {
 }
 
 .generate-btn:hover {
-  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.4) !important;
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.6) !important;
   transform: translateY(-1px);
 }
 
@@ -884,6 +888,7 @@ watch(textContent, (newValue, oldValue) => {
 
 .generate-btn .v-icon {
   align-self: center;
+  color: #000 !important;
 }
 
 /* 工具栏项目信息区域 */
@@ -902,6 +907,8 @@ watch(textContent, (newValue, oldValue) => {
   justify-content: space-between !important;
   text-transform: none !important;
   font-weight: 500 !important;
+  border-color: var(--glass-border) !important;
+  color: var(--text-primary) !important;
 }
 
 /* 保存按钮样式 */
@@ -922,11 +929,11 @@ watch(textContent, (newValue, oldValue) => {
 }
 
 .step-item:hover {
-  background-color: rgba(0, 0, 0, 0.04);
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .step-avatar {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .step-status {
@@ -940,7 +947,7 @@ watch(textContent, (newValue, oldValue) => {
 }
 
 .duration-text {
-  color: #666;
+  color: var(--text-secondary);
   font-size: 12px;
 }
 
@@ -949,6 +956,7 @@ watch(textContent, (newValue, oldValue) => {
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 12px;
+  color: #ff5252;
 }
 
 .completion-section,
